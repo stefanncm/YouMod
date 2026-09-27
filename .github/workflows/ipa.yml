@@ -13,7 +13,7 @@ on:
         default: 'main'
 
       ipa_url:
-        description: "URL to the decrypted IPA file"
+        description: "https://www.dropbox.com/scl/fi/yd0vwwzm9l0gbjstqavjy/com.google.ios.youtube-21.38.3-Decrypted.ipa?rlkey=mtsc6xuz7wphbpovm95kd5vna&st=k0n19ldh&dl=0"
         default: ""
         required: true
         type: string
