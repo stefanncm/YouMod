@@ -23,6 +23,28 @@ UIImage *YouModYTIconImage(NSInteger iconType, BOOL useCustomColor, UIColor *cus
     return [[icon iconImageWithColor:targetColor] imageWithTintColor:targetColor];
 }
 
+// Render an SF Symbol into an exact square canvas (aspect-fit, centered), so
+// every icon box is identical regardless of the symbol's natural proportions.
+// The result keeps template rendering, so callers can tint it afterwards.
+UIImage *YouModSymbolImageInCanvas(NSString *symbolName, CGFloat canvasSize, CGFloat pointSize, UIImageSymbolWeight weight) {
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:pointSize weight:weight];
+    UIImage *symbol = [UIImage systemImageNamed:symbolName withConfiguration:config];
+    if (!symbol) return nil;
+    symbol = [symbol imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(canvasSize, canvasSize) format:format];
+    UIImage *canvas = [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        CGFloat width = symbol.size.width;
+        CGFloat height = symbol.size.height;
+        if (width <= 0 || height <= 0) return;
+        CGFloat scale = MIN(canvasSize / width, canvasSize / height);
+        CGSize fitted = CGSizeMake(width * scale, height * scale);
+        [symbol drawInRect:CGRectMake((canvasSize - fitted.width) / 2.0, (canvasSize - fitted.height) / 2.0, fitted.width, fitted.height)];
+    }];
+    return [canvas imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+}
+
 // Language list
 NSArray *getAllSystemLanguageTitles() {
     NSMutableArray *titles = [NSMutableArray array];

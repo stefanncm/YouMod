@@ -282,9 +282,7 @@ static void YouModTranslateText(NSString *text, NSString *targetLang, void (^com
 
     self.reloadButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.reloadButton.translatesAutoresizingMaskIntoConstraints = NO;
-    UIImageSymbolConfiguration *reloadConfig = [UIImageSymbolConfiguration configurationWithPointSize:15 weight:UIFontWeightMedium];
-    UIImage *reloadImage = [UIImage systemImageNamed:@"arrow.clockwise" withConfiguration:reloadConfig];
-    [self.reloadButton setImage:reloadImage forState:UIControlStateNormal];
+    [self.reloadButton setImage:YouModSymbolImageInCanvas(@"arrow.clockwise", 24, 15, UIImageSymbolWeightMedium) forState:UIControlStateNormal];
     self.reloadButton.tintColor = [UIColor systemRedColor];
     self.reloadButton.hidden = YES;
     [self.reloadButton addTarget:self action:@selector(performTranslation) forControlEvents:UIControlEventTouchUpInside];
@@ -330,9 +328,7 @@ static void YouModTranslateText(NSString *text, NSString *targetLang, void (^com
 
 - (UIBarButtonItem *)createEqualBarButtonWithSymbol:(NSString *)symbolName action:(SEL)action {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:15 weight:UIFontWeightMedium];
-    UIImage *image = [UIImage systemImageNamed:symbolName withConfiguration:config];
-    [button setImage:image forState:UIControlStateNormal];
+    [button setImage:YouModSymbolImageInCanvas(symbolName, 24, 15, UIImageSymbolWeightMedium) forState:UIControlStateNormal];
     button.tintColor = [UIColor labelColor];
     
     button.translatesAutoresizingMaskIntoConstraints = NO;

@@ -58,18 +58,30 @@ void YouModApplyOLEDToDisplayView(_ASDisplayView *view, NSString *iden) {
         view.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
             return isDarkMode(view) ? [UIColor blackColor] : [UIColor whiteColor];
         }];
-    }
-    ASDisplayNode *node = view.keepalive_node;
-    NSString *desc = nil;
-    @try {
-        desc = [[[[node performSelector:@selector(nodeController)] performSelector:@selector(parent)] performSelector:@selector(owningComponent)] description];
-    } @catch (id ex) {
-        return;
-    }
-    if ([desc containsString:@"live_chat_buy_flow_panel_header.eml"] || [desc containsString:@"missing_content_view.eml"]) {
-        view.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
-            return isDarkMode(view) ? [UIColor blackColor] : [UIColor clearColor];
-        }];
+    } else {
+        ELMNodeController *nodeCon = view.keepalive_node.nodeController;
+        NSString *desc = nil;
+        @try {
+            desc = [[[nodeCon performSelector:@selector(parent)] performSelector:@selector(owningComponent)] description];
+        } @catch (id ex) {}
+        if (desc != nil && ([desc containsString:@"live_chat_buy_flow_panel_header.eml"] 
+            || [desc containsString:@"missing_content_view.eml"])) {
+            view.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
+                return isDarkMode(view) ? [UIColor blackColor] : [UIColor clearColor];
+            }];
+        } else {
+            desc = nil;
+            @try {
+                desc = [[[[nodeCon performSelector:@selector(parent)] performSelector:@selector(parent)] performSelector:@selector(owningComponent)] description];
+            } @catch (id ex) {
+                return;
+            }
+            if (desc != nil && [desc containsString:@"macro_markers_list_item.eml"]) {
+                view.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
+                    return isDarkMode(view) ? [UIColor blackColor] : [UIColor clearColor];
+                }];
+            }
+        }
     }
 }
 
@@ -99,18 +111,6 @@ void YouModApplyOLEDCollectionView(ASCollectionView *self, NSString *iden) {
     if ([controller isKindOfClass:%c(YTBottomSheetController)] || [controller isKindOfClass:%c(GOOModalWindowViewController)]) return;
     self.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
         return isDarkMode(self) ? [UIColor blackColor] : [UIColor clearColor];
-    }];
-    objc_setAssociatedObject(self, kOLEDKey, @YES, OBJC_ASSOCIATION_ASSIGN);
-}
-%end
-
-%hook YTRiveStartupAnimationViewController
-- (void)viewWillAppear:(BOOL)animated {
-    %orig;
-    if (objc_getAssociatedObject(self, kOLEDKey)) return;
-    UIView *mainView = self.view;
-    mainView.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
-        return isDarkMode(mainView) ? [UIColor blackColor] : [UIColor whiteColor];
     }];
     objc_setAssociatedObject(self, kOLEDKey, @YES, OBJC_ASSOCIATION_ASSIGN);
 }

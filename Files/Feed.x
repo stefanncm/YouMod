@@ -32,3 +32,15 @@
     %orig(sections);
 }
 %end
+
+// Original (untranslated) titles: the server ships the untranslated title next to the
+// auto-translated one on video renderers (search results, video lists).
+%hook YTIVideoWithContextRenderer
+- (YTIFormattedString *)title {
+    if (IS_ENABLED(NoTranslatedTitles) && [self hasUntranslatedTitle]) {
+        YTIFormattedString *original = [self untranslatedTitle];
+        if (original) return original;
+    }
+    return %orig;
+}
+%end

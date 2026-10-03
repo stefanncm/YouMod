@@ -203,7 +203,7 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
 // Filering new ads
 %hook YTIElementRenderer
 - (NSData *)elementData {
-    if (self.hasCompatibilityOptions && self.compatibilityOptions.hasAdLoggingData) return nil;
+    if (self.compatibilityOptions.hasAdLoggingData) return nil;
     return %orig;
 }
 %end
@@ -358,9 +358,7 @@ static BOOL isAdsReelContentModel(YTReelContentModel *model) {
     [self setValue:filteredArray(sectionRenderers) forKey:@"_sectionRenderers"];
     %orig;
 }
-- (void)addSectionsFromArray:(NSArray <YTIItemSectionRenderer *> *)array {
-    %orig(filteredArray(array));
-}
+- (void)addSectionsFromArray:(NSArray <YTIItemSectionRenderer *> *)array { %orig(filteredArray(array)); }
 %end
 
 void YouModFilterAdsDisplayView(_ASDisplayView *view, NSString *iden) {
@@ -404,9 +402,7 @@ void YouModRemoveDrawerAds(YTELMViewController *self) {
     }
     if (premiumCell == nil) return;
     ASDisplayNode *node = premiumCell.node;
-    for (id child in [node.yogaChildren copy]) {
-        [node removeYogaChild:child];
-    }
+    for (ASDisplayNode *child in node.yogaChildren) [node removeYogaChild:child];
     [premiumCell removeFromSuperview];
 }
 

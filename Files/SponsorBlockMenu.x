@@ -64,18 +64,7 @@ static UIImage *sbDotImage(UIColor *color) {
 // into an exact 24x24 canvas (aspect-fit, centered), so every row's icon box
 // is identical regardless of the symbol's natural proportions.
 static UIImage *sbSheetIcon(NSString *symbolName) {
-    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightMedium];
-    UIImage *symbol = [[UIImage systemImageNamed:symbolName withConfiguration:config] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
-    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(24, 24) format:format];
-    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
-        CGFloat width = symbol.size.width;
-        CGFloat height = symbol.size.height;
-        if (width <= 0 || height <= 0) return;
-        CGFloat scale = MIN(24.0 / width, 24.0 / height);
-        CGSize fitted = CGSizeMake(width * scale, height * scale);
-        [symbol drawInRect:CGRectMake((24.0 - fitted.width) / 2.0, (24.0 - fitted.height) / 2.0, fitted.width, fitted.height)];
-    }];
+    return YouModSymbolImageInCanvas(symbolName, 24, 22, UIImageSymbolWeightMedium);
 }
 
 #pragma mark - User ID
@@ -430,8 +419,7 @@ static void sbShowInPanel(UINavigationController *nav, UIWindowScene *scene) {
     [super viewDidLoad];
     self.title = self.cardTitle;
 
-    UIImageSymbolConfiguration *closeConfig = [UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightMedium];
-    UIBarButtonItem *closeButton = [[UIBarButtonItem alloc] initWithImage:[[UIImage systemImageNamed:@"xmark" withConfiguration:closeConfig] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]
+    UIBarButtonItem *closeButton = [[UIBarButtonItem alloc] initWithImage:YouModSymbolImageInCanvas(@"xmark", 24, 16, UIImageSymbolWeightMedium)
                                                                     style:UIBarButtonItemStylePlain
                                                                    target:self
                                                                    action:@selector(dismissCard)];
@@ -1020,6 +1008,7 @@ static UIView *sbNudgeControls(void (^nudge)(float delta)) {
             nudge(d);
         }]];
         button.titleLabel.font = [UIFont monospacedDigitSystemFontOfSize:14 weight:UIFontWeightSemibold];
+        button.tintColor = [UIColor systemPurpleColor];
         button.backgroundColor = [UIColor tertiarySystemFillColor];
         button.layer.cornerRadius = 8;
         [button.widthAnchor constraintEqualToConstant:36].active = YES;
@@ -1150,7 +1139,7 @@ static UIView *sbNudgeControls(void (^nudge)(float delta)) {
     [items addObject:[YMSBCardItem itemWithImage:sbSymbolImage(@"paperplane.fill")
                                            title:LOC(@"SB_SUBMIT_SEND")
                                         subtitle:nil
-                                       tintColor:[UIColor systemBlueColor]
+                                       tintColor:[UIColor systemPurpleColor]
                                          handler:^(YMSBCardViewController *c) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;

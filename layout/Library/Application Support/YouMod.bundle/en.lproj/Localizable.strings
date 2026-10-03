@@ -22,8 +22,8 @@
 "SOURCE_CODES_DESC" = "Take a look at the codes!";
 
 "EXTRA" = "Extra";
-"FIX_PLAYBACK_ISSUES" = "Fix playback issues (Temporary)";
-"FIX_PLAYBACK_ISSUES_DESC" = "Try to fix video playback issues for some users. Turning this on will make the player automatically reloads itself everytime it errors or fails to play the video.";
+"FIX_PLAYBACK_ISSUES" = "Fix playback issues (Experimental)";
+"FIX_PLAYBACK_ISSUES_DESC" = "This option is still experimental and may not work for some users.";
 
 "PERFER_HEADER" = "YouMod perferences";
 "PERFER" = "Perferences";
@@ -65,15 +65,21 @@
 "ADD_SHORTS_DOWNLOAD_DESC" = "Adds a download button to Shorts video overlay.";
 "HIDE_AUTO_DUBBED_DOWNLOADS" = "Hide auto-dubbed audio tracks";
 "HIDE_AUTO_DUBBED_DOWNLOADS_DESC" = "Hides AI auto-dubbed audio tracks from the download sheet's soundtrack picker.";
-"DOWNLOAD_LIBRARY_TAB" = "Downloads";
+"DOWNLOAD_LIBRARY_TAB" = "Download library";
 "DOWNLOAD_LIBRARY_TAB_DESC" = "Adds a tab that lists every downloaded video with thumbnails and sizes.";
 "DOWNLOAD_LIBRARY_EMPTY" = "No downloads yet";
+
 "LIBRARY_OPEN_VIDEO" = "Open Video on YouTube";
 "LIBRARY_NO_VIDEO_ID" = "Couldn't find this video's ID";
 "LIBRARY_SHARE" = "Share";
 "LIBRARY_SAVE_THUMBNAIL" = "Save Thumbnail to Photos";
 "LIBRARY_VIEW_INFO" = "View Info";
 "LIBRARY_DELETE" = "Delete";
+"LIBRARY_RENAME" = "Rename";
+"LIBRARY_RENAME_TITLE" = "Rename File";
+"LIBRARY_RENAMED" = "File renamed";
+"LIBRARY_RENAME_EMPTY" = "Name can't be empty";
+"LIBRARY_RENAME_FAILED" = "Couldn't rename the file";
 "OK" = "OK";
 "LIBRARY_INFO_SIZE" = "Size";
 "LIBRARY_INFO_DURATION" = "Duration";
@@ -180,6 +186,8 @@
 "HIDE_CAST_BUTTON_NAVBAR_DESC" = "Hide cast button in the navigation bar.";
 "HIDE_MESSAGES_BUTTON" = "Hide messages button";
 "HIDE_MESSAGES_BUTTON_DESC" = "Hide messages button in the navigation bar.";
+"HIDE_MORE_BUTTON_NAV" = "Hide more button";
+"HIDE_MORE_BUTTON_NAV_DESC" = "Hide the more (three-dot) button in the navigation bar.";
 
 "FEED" = "Feed";
 "HIDE_SUBBAR" = "Hide subbar";
@@ -223,6 +231,8 @@
 "AUDIO_TRACK_SELECT_DESC" = "Specifies the preferred audio track language to use for playback, if available.";
 "NO_AUTO_DUBBED" = "Uses original audio track";
 "NO_AUTO_DUBBED_DESC" = "Uses original audio track if the preferred language track is auto-dubbed or not found.";
+"NO_AUTO_TRANSLATED_TITLES" = "Original video titles";
+"NO_AUTO_TRANSLATED_TITLES_DESC" = "Shows video titles in their original language instead of YouTube's automatic translation, where the original title is provided.";
 "CAPTION_TRACK" = "Preferred captions";
 "CAPTION_TRACK_SELECT" = "Selected captions";
 "CAPTION_TRACK_SELECT_DESC" = "Specifies the preferred captions language to display, if available.";
@@ -246,6 +256,8 @@
 "OVERLAY_BUTTONS_EMPTY" = "No buttons";
 "REMOVE_ADS" = "Remove ads";
 "REMOVE_ADS_DESC" = "Removes ads from the app, except Playables";
+"HIDE_SPONSOR_BUTTON" = "Hide sponsor button";
+"HIDE_SPONSOR_BUTTON_DESC" = "Hide the sponsor button under the video and in the Shorts overlay.";
 "HOLD_TO_SPEED" = "Hold to speed";
 "HOLD_TO_SPEED_DESC" = "Uses custom hold to speed playback rate.";
 "HIDE_AUTOPLAY" = "Hide autoplay switch";
@@ -401,12 +413,20 @@
 "REMOVE_SHORTS_LIKE_BUTTON_DESC" = "Removes the like button from the Shorts overlay.";
 "REMOVE_SHORTS_COMMENT_BUTTON" = "Remove comment button";
 "REMOVE_SHORTS_COMMENT_BUTTON_DESC" = "Removes the comment button from the Shorts overlay.";
+"REMOVE_SHORTS_COMMENT_BAR" = "Remove comment box";
+"REMOVE_SHORTS_COMMENT_BAR_DESC" = "Removes the comment box from the Shorts overlay.";
+"REMOVE_SHORTS_RELATED_BUTTONS" = "Remove related Shorts metadata buttons";
+"REMOVE_SHORTS_RELATED_BUTTONS_DESC" = "Hide the buttons under the video title in the Shorts overlay.";
+"REMOVE_SHORTS_SAVE_BUTTON" = "Remove save button";
+"REMOVE_SHORTS_SAVE_BUTTON_DESC" = "Removes the save button from the Shorts overlay.";
 "REMOVE_SHORTS_SHARE_BUTTON" = "Remove share button";
 "REMOVE_SHORTS_SHARE_BUTTON_DESC" = "Removes the share button from the Shorts overlay.";
 "REMOVE_SHORTS_REMIX_BUTTON" = "Remove remix button";
 "REMOVE_SHORTS_REMIX_BUTTON_DESC" = "Removes the remix button from the Shorts overlay.";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON" = "Remove sound metadata button";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON_DESC" = "Removes the sound metadata button from the Shorts overlay.";
+"REMOVE_SHORTS_SUB_BUTTON" = "Remove subscribe button";
+"REMOVE_SHORTS_SUB_BUTTON_DESC" = "Removes the subscribe button from the Shorts overlay.";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON" = "Remove subscriptions button";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON_DESC" = "Removes the subscriptions button from the Shorts pause header.";
 "REMOVE_SHORTS_PAUSED_LIVE_BUTTON" = "Remove live button";
@@ -419,6 +439,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "Force enable the video quality selection menu in Shorts.";
 "SHOW_SHORTS_SEEKBAR" = "Always show seekbar";
 "SHOW_SHORTS_SEEKBAR_DESC" = "Ensure the progress/seek bar is always visible at the bottom of the Shorts player.";
+"DEFAULT_SPEED_SHORTS" = "Shorts default playback rate";
+"DEFAULT_SPEED_SHORTS_DESC" = "Overrides the default playback speed for Shorts, separate from regular videos.";
 "REMOVE_POSTS_SHORTS" = "Remove posts";
 "REMOVE_POSTS_SHORTS_DESC" = "Remove posts from the feed.";
 "SHORTS_FULLSCREEN" = "Pinch to Fullscreen";
@@ -533,6 +555,8 @@
 "HIDE_COMMUNITY_BUTTON_PANEL_DESC" = "Hide the community button in the engagement panel.";
 "HIDE_INFO_BUTTON_PANEL" = "Hide info button";
 "HIDE_INFO_BUTTON_PANEL_DESC" = "Hide the info button in the engagement panel.";
+"HIDE_SORT_FILTER_PANEL" = "Hide sort & filter button";
+"HIDE_SORT_FILTER_PANEL_DESC" = "Hide the sort and filter button from the top of the panel (except in live).";
 "DISABLES_RTL" = "Disable RTL formatting";
 "DISABLES_RTL_DESC" = "Forcefully displays text in left-to-right (LTR) format for languages that are initially displayed in right-to-left (RTL).";
 "DEVICE_UI" = "Interface style";
@@ -559,6 +583,8 @@
 "SB_SEGMENTS_IN_MINIPLAYER_DESC" = "Display colored segments on the progress bar of the mini-player.";
 "SB_SHOW_DURATION" = "Show duration without segments";
 "SB_SHOW_DURATION_DESC" = "Display the total video duration excluding skippable segments.";
+"SB_SHOW_FULL_VIDEO_LABEL" = "Show full video label";
+"SB_SHOW_FULL_VIDEO_LABEL_DESC" = "Display a banner when the video is labeled with a full-video category (e.g. Exclusive Access).";
 "SB_CATEGORIES_HEADER" = "Segment categories";
 "SB_SEGMENT_COLOR" = "Segment color";
 
@@ -570,25 +596,15 @@
 "SB_ACTION_SKIP_TO" = "Skip to segment";
 
 "SB_CAT_sponsor" = "Sponsor";
-"SB_CAT_sponsor_DESC" = "Paid promotion for a product or service not directly related to the creator.";
 "SB_CAT_intro" = "Intro";
-"SB_CAT_intro_DESC" = "Intermission or intro animation typically seen at the start of a video.";
 "SB_CAT_outro" = "Endcards";
-"SB_CAT_outro_DESC" = "Endcards, credits, or outros at the end of the video.";
 "SB_CAT_interaction" = "Interaction";
-"SB_CAT_interaction_DESC" = "Reminders to like, subscribe, or follow on social media.";
 "SB_CAT_selfpromo" = "Self-promotion";
-"SB_CAT_selfpromo_DESC" = "Unpaid promotion of the creator's own products, merchandise, or other content.";
 "SB_CAT_music_offtopic" = "Non-music";
-"SB_CAT_music_offtopic_DESC" = "Non-music sections in music videos (e.g. talking, introductions).";
 "SB_CAT_preview" = "Preview";
-"SB_CAT_preview_DESC" = "Recap or preview of content from another video or previous episode.";
 "SB_CAT_hook" = "Hook/Greetings";
-"SB_CAT_hook_DESC" = "Narrated trailers for the upcoming video, greetings and goodbyes.";
 "SB_CAT_poi_highlight" = "Highlight";
-"SB_CAT_poi_highlight_DESC" = "The key moment or highlight point of the video. Use 'Skip to' to jump directly to it.";
 "SB_CAT_filler" = "Filler";
-"SB_CAT_filler_DESC" = "Tangential content, jokes, or filler that is not directly related to the main topic.";
 
 "SB_SKIPPED" = "%@ segment has been skipped";
 "SB_DETECTED" = "%@ segment detected.\nWould you like to skip the segment?";
@@ -619,7 +635,6 @@
 "SB_VOTE_FAILED" = "Vote failed";
 "SB_VOTE_NO_SEGMENTS" = "No segments for this video";
 "SB_CAT_exclusive_access" = "Exclusive Access";
-"SB_CAT_exclusive_access_DESC" = "The whole video showcases a product, service or location the creator received free or subsidised access to.";
 "SB_FULL_VIDEO_LABEL" = "This video is labeled: %@";
 "SB_DETECTED_MUTE" = "%@ segment detected.\nWould you like to mute the segment?";
 "SB_MUTE_NOW" = "Mute";
@@ -684,10 +699,9 @@
 "FILES_HINT_VIDEO" = "%@ video is more efficient and higher quality, but the built-in iOS player cannot play it. Use a player like VLC.";
 "FILES_HINT_AUDIO" = "%@ audio is more efficient, but the built-in iOS player cannot play it. Use a player like VLC.";
 "FILES_HINT_COMPATIBLE" = "H.264 video with AAC audio — plays in the built-in iOS player.";
+"FILES_HINT_AUDIO_COMPATIBLE" = "AAC audio — plays in the built-in iOS player.";
 "AUDIO_ORIGINAL" = "Original";
-"AUDIO_ORIGINAL_LANG" = "%@ [Original]";
 "AUDIO_AUTO_DUBBED" = "%@ [AI]";
-"AUDIO_DUBBED" = "%@";
 
 // Sleep timer
 "SLEEP_TIMER" = "Sleep Timer";
@@ -696,6 +710,7 @@
 "SLEEP_TIMER_MINUTES_FMT" = "%ld min";
 "SLEEP_TIMER_END_OF_VIDEO" = "End of video";
 "SLEEP_TIMER_TIME_UP" = "Sleep timer ended. Playback paused";
+"SLEEP_TIMER_VIDEO_CHANGED" = "Video changed. Sleep timer turned off";
 "SLEEP_TIMER_CUSTOM_TIME" = "Pick a time...";
 "SLEEP_TIMER_ENTRY" = "Sleep Timer";
 "SLEEP_TIMER_ENTRY_DESC" = "Where the Sleep Timer entry point appears.";

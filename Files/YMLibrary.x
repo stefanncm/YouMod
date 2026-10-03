@@ -116,7 +116,10 @@ static NSString *ymMediaInfoStringForFile(NSURL *fileURL, unsigned long long byt
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
     NSMutableArray<NSString *> *lines = [NSMutableArray array];
     [lines addObject:[NSString stringWithFormat:@"%@: %@", LOC(@"LIBRARY_INFO_SIZE"), ymFormattedFileSize(bytes)]];
-    [lines addObject:[NSString stringWithFormat:@"%@: %.0fs", LOC(@"LIBRARY_INFO_DURATION"), CMTimeGetSeconds(asset.duration)]];
+    double durationSeconds = CMTimeGetSeconds(asset.duration);
+    if (durationSeconds > 0) {
+        [lines addObject:[NSString stringWithFormat:@"%@: %.0fs", LOC(@"LIBRARY_INFO_DURATION"), durationSeconds]];
+    }
     [lines addObject:[NSString stringWithFormat:@"%@: %@", LOC(@"LIBRARY_INFO_CONTAINER"), fileURL.pathExtension.uppercaseString]];
 
     AVAssetTrack *videoTrack = [asset tracksWithMediaType:AVMediaTypeVideo].firstObject;
@@ -166,7 +169,7 @@ static NSString *ymMediaInfoStringForFile(NSURL *fileURL, unsigned long long byt
 @property (nonatomic, strong) UIImageView *thumbnailImageView;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *sizeLabel;
-@property (nonatomic, strong) UIButton *menuButton;
+@property (nonatomic, strong) YTQTMButton *menuButton;
 // Called with the button itself so the sheet can anchor its iPad popover.
 @property (nonatomic, copy) void (^menuTappedHandler)(UIView *sourceView);
 @end
@@ -196,10 +199,12 @@ static NSString *ymMediaInfoStringForFile(NSURL *fileURL, unsigned long long byt
         _sizeLabel.textColor = [UIColor secondaryLabelColor];
         _sizeLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
-        _menuButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        _menuButton.imageEdgeInsets = UIEdgeInsetsMake(4, 4, 4, 4);
-        [_menuButton setImage:[UIImage systemImageNamed:@"ellipsis"] forState:UIControlStateNormal];
+        _menuButton = [%c(YTQTMButton) iconButton];
+        // Rendered into an exact 24x24 canvas so the ellipsis never gets
+        // squished or cropped inside the button's hit area.
+        [_menuButton setImage:YouModSymbolImageInCanvas(@"ellipsis", 24, 22, UIImageSymbolWeightMedium) forState:UIControlStateNormal];
         _menuButton.tintColor = [UIColor labelColor];
+        if ([_menuButton respondsToSelector:@selector(enableNewTouchFeedback)]) [_menuButton enableNewTouchFeedback];
         [_menuButton addTarget:self action:@selector(menuTapped) forControlEvents:UIControlEventTouchUpInside];
         _menuButton.translatesAutoresizingMaskIntoConstraints = NO;
 
@@ -280,12 +285,162 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     }];
 }
 
+#pragma mark - Pausing other players
+
+// Every AVPlayer alive in the process, held weakly so entries vanish on
+// dealloc without needing a dealloc hook.
+static NSHashTable<AVPlayer *> *ymLiveAVPlayers(void) {
+    static NSHashTable<AVPlayer *> *table;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ table = [NSHashTable weakObjectsHashTable]; });
+    return table;
+}
+
+// Pauses everything the app could be playing: YouTube's own player (watch
+// page, miniplayer, shorts) plus any AVPlayer anywhere in the process.
+static void ymPauseOtherPlayers(void) {
+    [YouModCurrentPlayerViewController pause];
+    for (AVPlayer *player in [ymLiveAVPlayers() allObjects]) {
+        if (player.rate > 0) [player pause];
+    }
+}
+
+%hook AVPlayer
+- (instancetype)initWithURL:(NSURL *)URL {
+    AVPlayer *player = %orig;
+    if (player) @synchronized(ymLiveAVPlayers()) { [ymLiveAVPlayers() addObject:player]; }
+    return player;
+}
+- (instancetype)initWithPlayerItem:(AVPlayerItem *)item {
+    AVPlayer *player = %orig;
+    if (player) @synchronized(ymLiveAVPlayers()) { [ymLiveAVPlayers() addObject:player]; }
+    return player;
+}
+%end
+
+#pragma mark - Pull-to-refresh control
+
+static const CGFloat ymRefreshTriggerDistance = 64.0;
+static const CGFloat ymRefreshHiddenTravel = 72.0; // how far the bubble sits above its resting spot
+
+// Pull-to-refresh bubble for the library grid: a floating circle with an
+// arrow that slides into view and rotates as the user drags down — from the
+// top of the list or by overscrolling past the bottom — then spins while
+// refreshing. Driven by the collection view's scroll delegate, which the
+// view controller forwards below.
+@interface YMLibraryRefreshControl : UIView
+@property (nonatomic, copy) void (^onRefresh)(void);
+@property (nonatomic, readonly, getter=isRefreshing) BOOL refreshing;
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView;
+- (void)draggingEndedInScrollView:(UIScrollView *)scrollView;
+- (void)beginRefreshing;
+- (void)endRefreshing;
+@end
+
+@interface YMLibraryRefreshControl ()
+@property (nonatomic, strong) UIImageView *iconView;
+@property (nonatomic, assign, getter=isRefreshing) BOOL refreshing; // readwrite privately
+@end
+
+@implementation YMLibraryRefreshControl
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor secondarySystemBackgroundColor];
+        self.layer.cornerRadius = 22;
+        self.layer.shadowColor = [UIColor blackColor].CGColor;
+        self.layer.shadowOpacity = 0.15;
+        self.layer.shadowRadius = 4;
+        self.layer.shadowOffset = CGSizeMake(0, 1);
+        self.alpha = 0;
+
+        self.iconView = [UIImageView new];
+        self.iconView.image = YouModSymbolImageInCanvas(@"arrow.down", 24, 18, UIImageSymbolWeightMedium);
+        self.iconView.tintColor = [UIColor secondaryLabelColor];
+        self.iconView.contentMode = UIViewContentModeCenter;
+        self.iconView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self addSubview:self.iconView];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [self.iconView.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
+            [self.iconView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
+            [self.iconView.widthAnchor constraintEqualToConstant:24],
+            [self.iconView.heightAnchor constraintEqualToConstant:24],
+        ]];
+    }
+    return self;
+}
+
+// How far past an edge the user has dragged: overshoot at the top or at the
+// bottom of the list, whichever is larger. Clamping the bottom's max offset
+// at the top resting point keeps short lists (smaller than the viewport)
+// from reading as permanently overscrolled.
+- (CGFloat)pullDistanceInScrollView:(UIScrollView *)scrollView {
+    CGFloat topPull = -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top);
+    CGFloat maxOffset = scrollView.contentSize.height - scrollView.bounds.size.height + scrollView.adjustedContentInset.bottom;
+    CGFloat bottomPull = scrollView.contentOffset.y - MAX(maxOffset, -scrollView.adjustedContentInset.top);
+    return MAX(topPull, bottomPull);
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGFloat pull = [self pullDistanceInScrollView:scrollView];
+    CGFloat progress = MIN(MAX(pull / ymRefreshTriggerDistance, 0), 1);
+    if (self.isRefreshing) return;
+    // The bubble slides down into view and the arrow flips from pointing
+    // down to pointing up across the pull.
+    self.transform = CGAffineTransformMakeTranslation(0, -ymRefreshHiddenTravel * (1 - progress));
+    self.alpha = progress;
+    self.iconView.transform = CGAffineTransformMakeRotation(progress * (CGFloat)M_PI);
+}
+
+// Called on finger-up: refresh only when the pull is still past the
+// threshold at release, so the bounce after a fast upward flick can't
+// trigger it on its own.
+- (void)draggingEndedInScrollView:(UIScrollView *)scrollView {
+    if (self.isRefreshing) return;
+    if ([self pullDistanceInScrollView:scrollView] >= ymRefreshTriggerDistance) {
+        [self beginRefreshing];
+    }
+}
+
+- (void)beginRefreshing {
+    if (self.isRefreshing) return;
+    self.refreshing = YES;
+
+    // Park the bubble fully in view and spin the arrow continuously; the
+    // scroll position stays wherever the user pulled from.
+    self.transform = CGAffineTransformIdentity;
+    self.alpha = 1.0;
+    CABasicAnimation *spin = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
+    spin.toValue = @((CGFloat)M_PI * 2.0);
+    spin.duration = 0.8;
+    spin.repeatCount = HUGE_VALF;
+    [self.iconView.layer addAnimation:spin forKey:@"ymLibraryRefreshSpin"];
+
+    if (self.onRefresh) self.onRefresh();
+}
+
+- (void)endRefreshing {
+    if (!self.isRefreshing) return;
+    self.refreshing = NO;
+    [self.iconView.layer removeAnimationForKey:@"ymLibraryRefreshSpin"];
+    self.iconView.transform = CGAffineTransformIdentity;
+    [UIView animateWithDuration:0.3 animations:^{
+        self.alpha = 0.0;
+        self.transform = CGAffineTransformMakeTranslation(0, -ymRefreshHiddenTravel);
+    }];
+}
+
+@end
+
 #pragma mark - Library view controller
 
 @interface YMLibraryViewController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate>
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UISearchBar *searchBar;
 @property (nonatomic, strong) UILabel *emptyLabel;
+@property (nonatomic, strong) YMLibraryRefreshControl *refreshControl;
 @property (nonatomic, strong) NSMutableArray<YMLibraryRow *> *allRows; // unfiltered backing store
 @property (nonatomic, strong) NSMutableArray<YMLibraryRow *> *rows;    // currently displayed (search-filtered)
 @property (nonatomic, weak) id hostParentResponder;
@@ -318,10 +473,11 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     _searchBar.tintColor = [UIColor colorWithRed:0.6 green:0.2 blue:0.9 alpha:1.0];
     _searchBar.translatesAutoresizingMaskIntoConstraints = NO;
 
-    UIButton *settingsButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    YTQTMButton *settingsButton = [%c(YTQTMButton) iconButton];
     [settingsButton setImage:YouModYTIconImage(44, NO, nil) forState:UIControlStateNormal];
     settingsButton.tintColor = [UIColor labelColor];
     [settingsButton addTarget:self action:@selector(openSettingsTapped) forControlEvents:UIControlEventTouchUpInside];
+    if ([settingsButton respondsToSelector:@selector(enableNewTouchFeedback)]) [settingsButton enableNewTouchFeedback];
     settingsButton.translatesAutoresizingMaskIntoConstraints = NO;
 
     [topBar addSubview:_searchBar];
@@ -335,9 +491,28 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     _collectionView.delegate = self;
     _collectionView.backgroundColor = ymYouTubeBackgroundColor();
     _collectionView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
+    _collectionView.alwaysBounceVertical = YES; // lets the pull-to-refresh gesture work even with few or no items
     _collectionView.translatesAutoresizingMaskIntoConstraints = NO;
     [_collectionView registerClass:[YMLibraryVideoCell class] forCellWithReuseIdentifier:@"video"];
     [self.view addSubview:_collectionView];
+
+    _refreshControl = [YMLibraryRefreshControl new];
+    _refreshControl.translatesAutoresizingMaskIntoConstraints = NO;
+    // Floating above the cells at any scroll position, hence the high zPosition.
+    _refreshControl.layer.zPosition = 1000;
+    [_collectionView addSubview:_refreshControl];
+    [NSLayoutConstraint activateConstraints:@[
+        [_refreshControl.topAnchor constraintEqualToAnchor:_collectionView.frameLayoutGuide.topAnchor constant:12],
+        [_refreshControl.centerXAnchor constraintEqualToAnchor:_collectionView.frameLayoutGuide.centerXAnchor],
+        [_refreshControl.widthAnchor constraintEqualToConstant:44],
+        [_refreshControl.heightAnchor constraintEqualToConstant:44],
+    ]];
+    __weak typeof(self) weakSelf = self;
+    _refreshControl.onRefresh = ^{
+        [weakSelf reloadWithCompletion:^{
+            [weakSelf.refreshControl endRefreshing];
+        }];
+    };
 
     [NSLayoutConstraint activateConstraints:@[
         [topBar.topAnchor constraintEqualToAnchor:self.view.topAnchor],
@@ -361,7 +536,8 @@ static UIColor *ymYouTubeBackgroundColor(void) {
         [settingsButton.leadingAnchor constraintEqualToAnchor:_searchBar.trailingAnchor constant:4],
         [settingsButton.trailingAnchor constraintEqualToAnchor:headerContentGuide.trailingAnchor constant:-14],
         [settingsButton.centerYAnchor constraintEqualToAnchor:_searchBar.centerYAnchor],
-        [settingsButton.widthAnchor constraintEqualToConstant:32],
+        [settingsButton.widthAnchor constraintEqualToConstant:35],
+        [settingsButton.heightAnchor constraintEqualToConstant:35],
 
         [_collectionView.topAnchor constraintEqualToAnchor:topBar.bottomAnchor],
         [_collectionView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
@@ -426,7 +602,7 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     [event send];
 }
 
-- (void)reload {
+- (void)reloadWithCompletion:(void (^)(void))completion {
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSArray<NSURL *> *files = ymLibraryFileURLsNewestFirst();
         NSMutableArray<YMLibraryRow *> *rows = [NSMutableArray arrayWithCapacity:files.count];
@@ -440,15 +616,25 @@ static UIColor *ymYouTubeBackgroundColor(void) {
             row.bytes = size.unsignedLongLongValue;
             row.sizeText = ymFormattedFileSize(row.bytes);
             row.isAudio = ymIsAudioOnlyExtension(fileURL.pathExtension);
-            row.thumbnail = row.isAudio ? [UIImage systemImageNamed:@"music.note"] : ymThumbnailForVideoFile(fileURL);
+            // Audio rows have no real artwork: render the note into a fixed
+            // 48pt canvas so it stays a medium icon centered in the frame
+            // instead of scaling up with the 16:9 thumbnail view.
+            row.thumbnail = row.isAudio
+                ? YouModSymbolImageInCanvas(@"music.note", 48, 24, UIImageSymbolWeightRegular)
+                : ymThumbnailForVideoFile(fileURL);
             [rows addObject:row];
         }
         dispatch_async(dispatch_get_main_queue(), ^{
             self.allRows = rows;
             [self applyFilter:self.searchBar.text];
             self.emptyLabel.hidden = rows.count > 0;
+            if (completion) completion();
         });
     });
+}
+
+- (void)reload {
+    [self reloadWithCompletion:nil];
 }
 
 - (void)applyFilter:(NSString *)query {
@@ -488,11 +674,24 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     return self.rows.count;
 }
 
+// The library view controller is the collection view's scroll delegate, so
+// it feeds the refresh control from here.
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView == self.collectionView) [self.refreshControl scrollViewDidScroll:scrollView];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+    if (scrollView == self.collectionView) [self.refreshControl draggingEndedInScrollView:scrollView];
+}
+
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     YMLibraryVideoCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"video" forIndexPath:indexPath];
     YMLibraryRow *row = self.rows[indexPath.item];
     cell.titleLabel.text = row.title;
     cell.sizeLabel.text = row.sizeText;
+    // Audio rows show a small centered icon on the placeholder fill; video
+    // rows fill the frame with their real thumbnail.
+    cell.thumbnailImageView.contentMode = row.isAudio ? UIViewContentModeCenter : UIViewContentModeScaleAspectFill;
     cell.thumbnailImageView.image = row.thumbnail;
     cell.thumbnailImageView.tintColor = row.isAudio ? [UIColor secondaryLabelColor] : nil;
     __weak typeof(self) weakSelf = self;
@@ -508,7 +707,15 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     NSURL *fileURL = [NSURL fileURLWithPath:row.path];
 
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
-    if (asset.isPlayable) {
+    // The deprecated isPlayable flag reports NO for playable m4a audio, so
+    // decide from the tracks the asset actually exposes: m4a/AAC exposes an
+    // audio track, while mka/mkv containers expose none.
+    BOOL playable = [asset tracksWithMediaType:AVMediaTypeVideo].count > 0
+                 || [asset tracksWithMediaType:AVMediaTypeAudio].count > 0;
+    if (playable) {
+        // Stop everything else that is playing (YouTube's player and any
+        // AVPlayer in the process) so it doesn't mix with the opened file.
+        ymPauseOtherPlayers();
         AVPlayerViewController *playerVC = [AVPlayerViewController new];
         playerVC.player = [AVPlayer playerWithURL:fileURL];
         [self presentViewController:playerVC animated:YES completion:^{
@@ -519,73 +726,114 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     }
 }
 
-- (UIContextMenuConfiguration *)collectionView:(UICollectionView *)collectionView contextMenuConfigurationForItemAtIndexPath:(NSIndexPath *)indexPath point:(CGPoint)point {
-    return [UIContextMenuConfiguration configurationWithIdentifier:nil previewProvider:nil actionProvider:^UIMenu * _Nullable(NSArray<UIMenuElement *> * _Nonnull suggestedActions) {
-        return [self contextMenuForRowAtIndexPath:indexPath];
-    }];
-}
-
-// Same options as the long-press context menu, presented as an action sheet
+// Options for a library item, presented as the YouTube-style bottom sheet
 // from the cell's ellipsis button.
 - (void)showActionSheetForRowAtIndexPath:(NSIndexPath *)indexPath sourceView:(UIView *)sourceView {
     YMLibraryRow *row = self.rows[indexPath.item];
     NSURL *fileURL = [NSURL fileURLWithPath:row.path];
+    id parentResponder = self.hostParentResponder ?: self;
 
-    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:row.title message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"LIBRARY_SHARE")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
+    YTDefaultSheetController *sheet = [%c(YTDefaultSheetController) sheetControllerWithParentResponder:parentResponder];
+
+    [sheet addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"LIBRARY_RENAME")
+                                                    iconImage:YouModSymbolImageInCanvas(@"pencil", 24, 22, UIImageSymbolWeightMedium)
+                                                        style:0
+                                                      handler:^(__unused YTActionSheetAction *action) {
+        [self presentRenameDialogForRow:row];
+    }]];
+    [sheet addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"LIBRARY_SHARE")
+                                                    iconImage:YouModSymbolImageInCanvas(@"square.and.arrow.up", 24, 22, UIImageSymbolWeightMedium)
+                                                        style:0
+                                                      handler:^(__unused YTActionSheetAction *action) {
         YouModShareItem(fileURL, self);
     }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"LIBRARY_SAVE_THUMBNAIL")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
-        [self saveThumbnailToPhotosForRow:row];
-    }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"LIBRARY_OPEN_VIDEO")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
+    if (!row.isAudio) {
+        [sheet addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"LIBRARY_SAVE_THUMBNAIL")
+                                                        iconImage:YouModSymbolImageInCanvas(@"photo", 24, 22, UIImageSymbolWeightMedium)
+                                                            style:0
+                                                          handler:^(__unused YTActionSheetAction *action) {
+            [self saveThumbnailToPhotosForRow:row];
+        }]];
+    }
+    [sheet addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"LIBRARY_OPEN_VIDEO")
+                                                    iconImage:YouModSymbolImageInCanvas(@"play.rectangle", 24, 22, UIImageSymbolWeightMedium)
+                                                        style:0
+                                                      handler:^(__unused YTActionSheetAction *action) {
         [self openOriginalVideoForRow:row];
     }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"LIBRARY_VIEW_INFO")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
-        [self presentInfoForFileURL:fileURL bytes:row.bytes];
+    [sheet addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"LIBRARY_VIEW_INFO")
+                                                    iconImage:YouModSymbolImageInCanvas(@"info.circle", 24, 22, UIImageSymbolWeightMedium)
+                                                        style:0
+                                                      handler:^(__unused YTActionSheetAction *action) {
+        [self presentInfoForRow:row];
     }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"LIBRARY_DELETE")
-                                              style:UIAlertActionStyleDestructive
-                                            handler:^(__unused UIAlertAction *action) {
+    [sheet addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"LIBRARY_DELETE")
+                                                    iconImage:YouModSymbolImageInCanvas(@"trash", 24, 22, UIImageSymbolWeightMedium)
+                                                        style:0
+                                                      handler:^(__unused YTActionSheetAction *action) {
         [self deleteRowAtIndexPath:indexPath];
     }]];
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-    sheet.popoverPresentationController.sourceView = sourceView;
-    sheet.popoverPresentationController.sourceRect = sourceView.bounds;
-    [self presentViewController:sheet animated:YES completion:nil];
+
+    [sheet presentFromView:sourceView animated:YES completion:nil];
 }
 
-- (UIMenu *)contextMenuForRowAtIndexPath:(NSIndexPath *)indexPath {    YMLibraryRow *row = self.rows[indexPath.item];
-    NSURL *fileURL = [NSURL fileURLWithPath:row.path];
+// Rename dialog via the system alert: a text field prefilled with the
+// current name plus Cancel / Rename buttons. The video ID suffix (and the
+// file extension) are preserved automatically.
+- (void)presentRenameDialogForRow:(YMLibraryRow *)row {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"LIBRARY_RENAME_TITLE")
+                                                                   message:nil
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    __weak typeof(self) weakSelf = self;
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.text = ymDisplayTitleForFileName(row.path.lastPathComponent.stringByDeletingPathExtension);
+        field.autocorrectionType = UITextAutocorrectionTypeNo;
+        field.spellCheckingType = UITextSpellCheckingTypeNo;
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
+    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"LIBRARY_RENAME") style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
+        UITextField *field = alert.textFields.firstObject;
+        NSString *newBase = [field.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (newBase.length == 0) {
+            YouModSendError(LOC(@"LIBRARY_RENAME_EMPTY"));
+            return;
+        }
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if ([strongSelf applyRename:newBase toRow:row]) {
+            YouModSendSuccess(LOC(@"LIBRARY_RENAMED"));
+            [strongSelf.collectionView reloadData];
+        } else {
+            YouModSendError(LOC(@"LIBRARY_RENAME_FAILED"));
+        }
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
 
-    UIAction *openVideo = [UIAction actionWithTitle:LOC(@"LIBRARY_OPEN_VIDEO") image:[UIImage systemImageNamed:@"play.rectangle"] identifier:nil handler:^(UIAction *action) {
-        [self openOriginalVideoForRow:row];
-    }];
-    UIAction *share = [UIAction actionWithTitle:LOC(@"LIBRARY_SHARE") image:[UIImage systemImageNamed:@"square.and.arrow.up"] identifier:nil handler:^(UIAction *action) {
-        YouModShareItem(fileURL, self);
-    }];
-    UIAction *saveThumbnail = [UIAction actionWithTitle:LOC(@"LIBRARY_SAVE_THUMBNAIL") image:[UIImage systemImageNamed:@"photo"] identifier:nil handler:^(UIAction *action) {
-        [self saveThumbnailToPhotosForRow:row];
-    }];
-    UIAction *viewInfo = [UIAction actionWithTitle:LOC(@"LIBRARY_VIEW_INFO") image:[UIImage systemImageNamed:@"info.circle"] identifier:nil handler:^(UIAction *action) {
-        [self presentInfoForFileURL:fileURL bytes:row.bytes];
-    }];
-    UIAction *delete = [UIAction actionWithTitle:LOC(@"LIBRARY_DELETE") image:[UIImage systemImageNamed:@"trash"] identifier:nil handler:^(UIAction *action) {
-        [self deleteRowAtIndexPath:indexPath];
-    }];
-    delete.attributes = UIMenuElementAttributesDestructive;
+// Moves the media file (plus its sidecar thumbnail) and updates the row in
+// place, so the collection view reflects the new name immediately.
+// Returns NO when the name didn't change or the file couldn't be moved.
+- (BOOL)applyRename:(NSString *)newBase toRow:(YMLibraryRow *)row {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *directory = [row.path stringByDeletingLastPathComponent];
+    NSString *videoID = ymVideoIDForFileName(row.path.lastPathComponent.stringByDeletingPathExtension);
+    NSString *newBaseName = videoID ? [NSString stringWithFormat:@"%@ [%@]", newBase, videoID] : newBase;
+    NSString *newPath = [[directory stringByAppendingPathComponent:newBaseName] stringByAppendingPathExtension:row.path.pathExtension];
+    if (!newPath || [newPath isEqualToString:row.path]) return NO;
+    if ([fm fileExistsAtPath:newPath]) return NO;
 
-    return [UIMenu menuWithTitle:row.title children:@[share, saveThumbnail, openVideo, viewInfo, delete]];
+    if (![fm moveItemAtPath:row.path toPath:newPath error:nil]) return NO;
+
+    // Follow along with the sibling .jpg and drop the stale generated-thumb
+    // cache entry (keyed by the old file name).
+    NSString *oldSibling = [[row.path stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+    NSString *newSibling = [[newPath stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpg"];
+    if ([fm fileExistsAtPath:oldSibling]) [fm moveItemAtPath:oldSibling toPath:newSibling error:nil];
+    [fm removeItemAtPath:ymGeneratedThumbCacheURL([NSURL fileURLWithPath:row.path]).path error:nil];
+
+    row.path = newPath;
+    row.title = newBase;
+    return YES;
 }
 
 - (void)openOriginalVideoForRow:(YMLibraryRow *)row {
@@ -623,13 +871,16 @@ static UIColor *ymYouTubeBackgroundColor(void) {
     });
 }
 
-- (void)presentInfoForFileURL:(NSURL *)fileURL bytes:(unsigned long long)bytes {
+- (void)presentInfoForRow:(YMLibraryRow *)row {
+    NSURL *fileURL = [NSURL fileURLWithPath:row.path];
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        NSString *info = ymMediaInfoStringForFile(fileURL, bytes);
+        NSString *info = ymMediaInfoStringForFile(fileURL, row.bytes);
         dispatch_async(dispatch_get_main_queue(), ^{
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(@"LIBRARY_VIEW_INFO") message:info preferredStyle:UIAlertControllerStyleAlert];
-            [alert addAction:[UIAlertAction actionWithTitle:LOC(@"OK") style:UIAlertActionStyleDefault handler:nil]];
-            [self presentViewController:alert animated:YES completion:nil];
+            YTAlertView *alertView = [%c(YTAlertView) infoDialog];
+            alertView.title = row.title;
+            alertView.subtitle = info;
+            alertView.shouldDismissOnBackgroundTap = YES;
+            [alertView show];
         });
     });
 }

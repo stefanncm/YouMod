@@ -1,4 +1,3 @@
-#import <Photos/Photos.h>
 #import "Headers.h"
 
 @implementation YouModThumbnailViewController

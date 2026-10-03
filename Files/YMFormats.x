@@ -42,17 +42,12 @@ static void YMFormatsLogMsg(NSString *format, ...) {
             if (nameSaysOriginal) name = [name substringToIndex:originalSuffix.location];
             if (self.isAutoDubbed) {
                 return [NSString stringWithFormat:LOC(@"AUDIO_AUTO_DUBBED"), name];
-            } else if (self.isOriginal || nameSaysOriginal) {
-                return [NSString stringWithFormat:LOC(@"AUDIO_ORIGINAL_LANG"), name];
-            } else if (self.isDubbed) {
-                return [NSString stringWithFormat:LOC(@"AUDIO_DUBBED"), name];
             }
-            return [NSString stringWithFormat:LOC(@"AUDIO_ORIGINAL_LANG"), name];
+            return name;
         }
         NSString *first = [self.audioTrackID componentsSeparatedByString:@"."].firstObject;
         if (first.length > 0) {
-            NSString *lang = [[NSLocale currentLocale] localizedStringForLanguageCode:first] ?: first;
-            return [NSString stringWithFormat:LOC(@"AUDIO_ORIGINAL_LANG"), lang];
+            return [[NSLocale currentLocale] localizedStringForLanguageCode:first] ?: first;
         }
         return LOC(@"AUDIO_ORIGINAL");
     }
@@ -422,7 +417,9 @@ NSArray<YMCaptionTrack *> *YMCaptionTracksFromPlayer(YTPlayerViewController *pla
         if (baseURL.length == 0) continue;
         YMCaptionTrack *t = [YMCaptionTrack new];
         t.languageCode = [track languageCode];
-        NSString *title = [[track name] dropdownOptionTitle];
+        // dropdownOptionTitle only exists on YTIFormattedString from 20.x; 19.x would throw.
+        id name = [track name];
+        NSString *title = [name respondsToSelector:@selector(dropdownOptionTitle)] ? [name dropdownOptionTitle] : [name stringWithFormattingRemoved];
         t.name = title ?: [track languageCode];
         t.vttURL = [baseURL stringByAppendingString:@"&fmt=vtt"];
         [out addObject:t];

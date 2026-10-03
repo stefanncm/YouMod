@@ -22,8 +22,8 @@
 "SOURCE_CODES_DESC" = "Взгляните на код!";
 
 "EXTRA" = "Дополнительно";
-"FIX_PLAYBACK_ISSUES" = "Исправить проблемы воспроизведения (временно)";
-"FIX_PLAYBACK_ISSUES_DESC" = "Пытается исправить проблемы воспроизведения видео у некоторых пользователей. При включении плеер будет автоматически перезагружаться при каждой ошибке или неудачном воспроизведении видео.";
+"FIX_PLAYBACK_ISSUES" = "Fix playback issues (Experimental)";
+"FIX_PLAYBACK_ISSUES_DESC" = "This option is still experimental and may not work for some users.";
 
 "PERFER_HEADER" = "Настройки YouMod";
 "PERFER" = "Настройки";
@@ -159,6 +159,8 @@
 "HIDE_CAST_BUTTON_NAVBAR_DESC" = "Скрывает кнопку трансляции в панели навигации.";
 "HIDE_MESSAGES_BUTTON" = "Скрыть кнопку сообщений";
 "HIDE_MESSAGES_BUTTON_DESC" = "Скрывает кнопку сообщений на панели навигации.";
+"HIDE_MORE_BUTTON_NAV" = "Hide more button";
+"HIDE_MORE_BUTTON_NAV_DESC" = "Hide the more (three-dot) button in the navigation bar.";
 
 "FEED" = "Лента";
 "HIDE_SUBBAR" = "Скрыть панель фильтров";
@@ -202,6 +204,8 @@
 "AUDIO_TRACK_SELECT_DESC" = "Задаёт предпочитаемый язык аудиодорожки для воспроизведения, если он доступен.";
 "NO_AUTO_DUBBED" = "Использовать оригинальную аудиодорожку";
 "NO_AUTO_DUBBED_DESC" = "Использует оригинальную аудиодорожку, если дорожка на предпочитаемом языке автоматически дублирована или не найдена.";
+"NO_AUTO_TRANSLATED_TITLES" = "Оригинальные названия видео";
+"NO_AUTO_TRANSLATED_TITLES_DESC" = "Показывает названия видео на исходном языке вместо автоперевода YouTube, если оригинальное название передаётся.";
 "CAPTION_TRACK" = "Предпочитаемые субтитры";
 "CAPTION_TRACK_SELECT" = "Выбранные субтитры";
 "CAPTION_TRACK_SELECT_DESC" = "Задаёт предпочитаемый язык субтитров для отображения, если он доступен.";
@@ -225,6 +229,8 @@
 "OVERLAY_BUTTONS_EMPTY" = "Нет кнопок";
 "REMOVE_ADS" = "Убрать рекламу";
 "REMOVE_ADS_DESC" = "Убирает рекламу из приложения, кроме игр";
+"HIDE_SPONSOR_BUTTON" = "Hide sponsor button";
+"HIDE_SPONSOR_BUTTON_DESC" = "Hide the sponsor button under the video and in the Shorts overlay.";
 "HOLD_TO_SPEED" = "Ускорение удержанием";
 "HOLD_TO_SPEED_DESC" = "Задаёт скорость воспроизведения для режима ускорения удержанием.";
 "HIDE_AUTOPLAY" = "Скрыть переключатель автовоспроизведения";
@@ -380,12 +386,20 @@
 "REMOVE_SHORTS_LIKE_BUTTON_DESC" = "Удаляет кнопку «Нравится» в интерфейсе Shorts.";
 "REMOVE_SHORTS_COMMENT_BUTTON" = "Удалить кнопку «Комментарии»";
 "REMOVE_SHORTS_COMMENT_BUTTON_DESC" = "Удаляет кнопку «Комментарии» в интерфейсе Shorts.";
+"REMOVE_SHORTS_COMMENT_BAR" = "Remove comment box";
+"REMOVE_SHORTS_COMMENT_BAR_DESC" = "Removes the comment box from the Shorts overlay.";
+"REMOVE_SHORTS_RELATED_BUTTONS" = "Remove related Shorts metadata buttons";
+"REMOVE_SHORTS_RELATED_BUTTONS_DESC" = "Hide the buttons under the video title in the Shorts overlay.";
+"REMOVE_SHORTS_SAVE_BUTTON" = "Удалить кнопку «Сохранить»";
+"REMOVE_SHORTS_SAVE_BUTTON_DESC" = "Удаляет кнопку «Сохранить» в интерфейсе Shorts.";
 "REMOVE_SHORTS_SHARE_BUTTON" = "Удалить кнопку «Поделиться»";
 "REMOVE_SHORTS_SHARE_BUTTON_DESC" = "Удаляет кнопку «Поделиться» в интерфейсе Shorts.";
 "REMOVE_SHORTS_REMIX_BUTTON" = "Удалить кнопку «Ремикс»";
 "REMOVE_SHORTS_REMIX_BUTTON_DESC" = "Удаляет кнопку «Ремикс» в интерфейсе Shorts.";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON" = "Удалить кнопку информации о звуке";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON_DESC" = "Удаляет кнопку с информацией о треке/звуке в интерфейсе Shorts.";
+"REMOVE_SHORTS_SUB_BUTTON" = "Remove subscribe button";
+"REMOVE_SHORTS_SUB_BUTTON_DESC" = "Removes the subscribe button from the Shorts overlay.";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON" = "Удалить кнопку «Подписки»";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON_DESC" = "Удаляет кнопку подписок в заголовке при паузе Shorts.";
 "REMOVE_SHORTS_PAUSED_LIVE_BUTTON" = "Удалить кнопку «Live»";
@@ -398,6 +412,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "Принудительно включает меню выбора качества видео в Shorts.";
 "SHOW_SHORTS_SEEKBAR" = "Всегда показывать полосу прогресса";
 "SHOW_SHORTS_SEEKBAR_DESC" = "Полоса прогресса всегда видна в нижней части плеера Shorts.";
+"DEFAULT_SPEED_SHORTS" = "Shorts default playback rate";
+"DEFAULT_SPEED_SHORTS_DESC" = "Overrides the default playback speed for Shorts, separate from regular videos.";
 "REMOVE_POSTS_SHORTS" = "Убрать публикации";
 "REMOVE_POSTS_SHORTS_DESC" = "Убирает публикации из ленты.";
 "SHORTS_FULLSCREEN" = "Полноэкранный режим щипком";
@@ -512,6 +528,8 @@
 "HIDE_COMMUNITY_BUTTON_PANEL_DESC" = "Скрывает кнопку сообщества на всплывающей панели под видео.";
 "HIDE_INFO_BUTTON_PANEL" = "Скрыть кнопку информации";
 "HIDE_INFO_BUTTON_PANEL_DESC" = "Скрывает кнопку информации на всплывающей панели под видео.";
+"HIDE_SORT_FILTER_PANEL" = "Hide sort & filter button";
+"HIDE_SORT_FILTER_PANEL_DESC" = "Hide the sort and filter button from the top of the panel (except in live).";
 "DISABLES_RTL" = "Отключить формат RTL";
 "DISABLES_RTL_DESC" = "Принудительно отображает текст слева направо (LTR) для языков, которые изначально пишутся справа налево (RTL).";
 "DEVICE_UI" = "Стиль интерфейса";
@@ -538,6 +556,8 @@
 "SB_SEGMENTS_IN_MINIPLAYER_DESC" = "Показывает цветные отрезки на полосе прогресса мини-плеера.";
 "SB_SHOW_DURATION" = "Показывать длительность без отрезков";
 "SB_SHOW_DURATION_DESC" = "Показывает общую длительность видео без учёта пропускаемых отрезков.";
+"SB_SHOW_FULL_VIDEO_LABEL" = "Показывать метку всего видео";
+"SB_SHOW_FULL_VIDEO_LABEL_DESC" = "Показывает баннер, когда видео помечено категорией на всё видео (например, «Эксклюзивный доступ»).";
 "SB_CATEGORIES_HEADER" = "Категории отрезков";
 "SB_SEGMENT_COLOR" = "Цвет отрезка";
 
@@ -549,25 +569,15 @@
 "SB_ACTION_SKIP_TO" = "Перейти к отрезку";
 
 "SB_CAT_sponsor" = "Спонсор";
-"SB_CAT_sponsor_DESC" = "Платная реклама товара или услуги, не связанной напрямую с автором.";
 "SB_CAT_intro" = "Интро / Заставка";
-"SB_CAT_intro_DESC" = "Перебивка или вступительная заставка в начале видео.";
 "SB_CAT_outro" = "Конечные заставки / Титры";
-"SB_CAT_outro_DESC" = "Конечные заставки, титры или завершающая часть видео.";
 "SB_CAT_interaction" = "Напоминание о подписке";
-"SB_CAT_interaction_DESC" = "Просьбы поставить лайк, подписаться или перейти в соцсети.";
 "SB_CAT_selfpromo" = "Самореклама";
-"SB_CAT_selfpromo_DESC" = "Неоплачиваемая реклама собственных товаров, мерча или других проектов автора.";
 "SB_CAT_music_offtopic" = "Немузыкальная часть";
-"SB_CAT_music_offtopic_DESC" = "Разговоры или вступления без музыки в клипах.";
 "SB_CAT_preview" = "Превью / Краткое содержание";
-"SB_CAT_preview_DESC" = "Краткий пересказ предыдущих выпусков или анонс видео.";
 "SB_CAT_hook" = "Тизер / Приветствие";
-"SB_CAT_hook_DESC" = "Краткий фрагмент-тизер перед видео или приветствие.";
 "SB_CAT_poi_highlight" = "Главный момент / Хайлайт";
-"SB_CAT_poi_highlight_DESC" = "Ключевой момент видео. Используйте «Перейти», чтобы сразу открыть его.";
 "SB_CAT_filler" = "Вода / Отступления";
-"SB_CAT_filler_DESC" = "Сцены не по теме, шутки или моменты, не несущие смысловой нагрузки.";
 
 "SB_SKIPPED" = "Отрезок %@ пропущен";
 "SB_DETECTED" = "Обнаружен отрезок %@.\nПропустить его?";
@@ -598,7 +608,6 @@
 "SB_VOTE_FAILED" = "Не удалось проголосовать";
 "SB_VOTE_NO_SEGMENTS" = "Для этого видео нет отрезков";
 "SB_CAT_exclusive_access" = "Эксклюзивный доступ";
-"SB_CAT_exclusive_access_DESC" = "Всё видео демонстрирует продукт, услугу или место, к которым автор получил бесплатный или льготный доступ.";
 "SB_FULL_VIDEO_LABEL" = "Метка видео: %@";
 "SB_DETECTED_MUTE" = "Обнаружен сегмент «%@».\nОтключить звук в этом сегменте?";
 "SB_MUTE_NOW" = "Без звука";
@@ -640,12 +649,18 @@
 "DOWNLOAD_LIBRARY_TAB" = "Загрузки";
 "DOWNLOAD_LIBRARY_TAB_DESC" = "Добавляет вкладку со списком всех скачанных видео с превью и размерами.";
 "DOWNLOAD_LIBRARY_EMPTY" = "Пока нет загрузок";
+
 "LIBRARY_OPEN_VIDEO" = "Открыть видео в YouTube";
 "LIBRARY_NO_VIDEO_ID" = "Не удалось найти ID этого видео";
 "LIBRARY_SHARE" = "Поделиться";
 "LIBRARY_SAVE_THUMBNAIL" = "Сохранить превью в Фото";
 "LIBRARY_VIEW_INFO" = "Информация";
 "LIBRARY_DELETE" = "Удалить";
+"LIBRARY_RENAME" = "Переименовать";
+"LIBRARY_RENAME_TITLE" = "Переименовать файл";
+"LIBRARY_RENAMED" = "Файл переименован";
+"LIBRARY_RENAME_EMPTY" = "Название не может быть пустым";
+"LIBRARY_RENAME_FAILED" = "Не удалось переименовать файл";
 "OK" = "OK";
 "LIBRARY_INFO_SIZE" = "Размер";
 "LIBRARY_INFO_DURATION" = "Длительность";
@@ -681,16 +696,16 @@
 "FILES_HINT_VIDEO" = "Видео %@ эффективнее и качественнее, но встроенный плеер iOS не может его воспроизвести. Используйте плеер вроде VLC.";
 "FILES_HINT_AUDIO" = "Аудио %@ эффективнее, но встроенный плеер iOS не может его воспроизвести. Используйте плеер вроде VLC.";
 "FILES_HINT_COMPATIBLE" = "Видео H.264 с аудио AAC — воспроизводится во встроенном плеере iOS.";
+"FILES_HINT_AUDIO_COMPATIBLE" = "Аудио AAC — воспроизводится во встроенном плеере iOS.";
 "AUDIO_ORIGINAL" = "Оригинал";
-"AUDIO_ORIGINAL_LANG" = "%@ [Оригинал]";
 "AUDIO_AUTO_DUBBED" = "%@ [ИИ]";
-"AUDIO_DUBBED" = "%@";
 "SLEEP_TIMER" = "Таймер сна";
 "SLEEP_TIMER_OFF" = "Выключить таймер";
 "SLEEP_TIMER_REMAINING_FMT" = "Осталось: %@";
 "SLEEP_TIMER_MINUTES_FMT" = "%ld мин.";
 "SLEEP_TIMER_END_OF_VIDEO" = "Конец видео";
 "SLEEP_TIMER_TIME_UP" = "Таймер сна сработал. Воспроизведение приостановлено";
+"SLEEP_TIMER_VIDEO_CHANGED" = "Видео изменено. Таймер сна выключен";
 "SLEEP_TIMER_CUSTOM_TIME" = "Выбрать время...";
 "SLEEP_TIMER_ENTRY" = "Таймер сна";
 "SLEEP_TIMER_ENTRY_DESC" = "Где показывается кнопка таймера сна.";

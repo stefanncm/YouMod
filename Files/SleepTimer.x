@@ -5,7 +5,7 @@
 // main player when it fires. Started from the overlay moon button or the tab
 // long-press menu.
 
-#pragma mark - Slim status bar classes (only exist on newer YouTube versions)
+#pragma mark - Slim status bar classes
 
 @interface YTSlimStatusBarView : UIView
 - (void)updateAppearanceToSleepTimerActiveWithText:(NSString *)text;
@@ -53,14 +53,19 @@ static NSString *YMSleepTimerFormatClock(NSTimeInterval interval) {
 @property (nonatomic, assign) BOOL volumeCaptured;
 @property (nonatomic, assign) BOOL connectionLost;
 @property (nonatomic, copy) NSString *endOfVideoID;
+// Last remaining playback time seen from YTSingleVideoTime callbacks; decides
+// whether a videoID change was a natural end (< 0.1 s left) or a manual switch.
+@property (nonatomic, assign) CGFloat capturedRemainingTime;
 + (instancetype)shared;
 - (void)startWithMinutes:(NSInteger)minutes;
 - (void)startAtDate:(NSDate *)date;
 - (void)startEndOfVideo;
 - (void)cancel;
+- (void)cancelForVideoChange;
 - (void)fire;
 - (void)tick;
 - (void)playbackTick;
+- (void)noteSingleVideoTime:(YTSingleVideoTime *)time video:(YTSingleVideoController *)video;
 - (void)scheduleTimer;
 - (BOOL)isActive;
 - (NSString *)remainingText;
@@ -127,7 +132,13 @@ static NSString *YMSleepTimerFormatClock(NSTimeInterval interval) {
     [self restoreVolume];
     self.mode = YMSleepTimerModeEndOfVideo;
     self.endDate = nil;
-    self.endOfVideoID = [YouModCurrentPlayerViewController currentVideoID];
+    YTPlayerViewController *player = YouModCurrentPlayerViewController;
+    self.endOfVideoID = [player currentVideoID];
+    CGFloat total = player ? [player currentVideoTotalMediaTime] : 0.0;
+    CGFloat current = player ? [player currentVideoMediaTime] : 0.0;
+    // No duration known yet: treat any upcoming video change as a manual
+    // switch until YTSingleVideoTime ticks give us a real remaining time.
+    self.capturedRemainingTime = total > current ? total - current : CGFLOAT_MAX;
     self.connectionLost = NO;
     [self persist];
     [self scheduleTimer];
@@ -143,6 +154,24 @@ static NSString *YMSleepTimerFormatClock(NSTimeInterval interval) {
     [self persist];
     [self deactivateSlimBars];
     [self notifyButtons];
+}
+
+// The user moved to a different video before this one ended: shut the timer
+// down without pausing playback and say so with a pill (not a dialog).
+- (void)cancelForVideoChange {
+    [self restoreVolume];
+    [self stopTimer];
+    self.endDate = nil;
+    self.mode = YMSleepTimerModeCountdown;
+    self.endOfVideoID = nil;
+    [self persist];
+    [self deactivateSlimBars];
+    [self notifyButtons];
+    void (^pill)(void) = ^{
+        YouModSendToast(LOC(@"SLEEP_TIMER_VIDEO_CHANGED"));
+    };
+    if ([NSThread isMainThread]) pill();
+    else dispatch_async(dispatch_get_main_queue(), pill);
 }
 
 - (void)fire {
@@ -200,8 +229,18 @@ static NSString *YMSleepTimerFormatClock(NSTimeInterval interval) {
         YTPlayerViewController *player = YouModCurrentPlayerViewController;
         NSString *videoID = [player currentVideoID];
         BOOL videoChanged = self.endOfVideoID && videoID && ![videoID isEqualToString:self.endOfVideoID];
-        if (player && ([player isPlaybackFinished] || videoChanged)) {
+        if (player && [player isPlaybackFinished]) {
             [self fire];
+            return;
+        }
+        if (videoChanged) {
+            // The last remaining time captured from YTSingleVideoTime tells a
+            // natural end (autoplay, <0.1 s left) from a manual video switch.
+            if (self.capturedRemainingTime < 0.1) {
+                [self fire];
+            } else {
+                [self cancelForVideoChange];
+            }
             return;
         }
     }
@@ -217,6 +256,17 @@ static NSString *YMSleepTimerFormatClock(NSTimeInterval interval) {
     if (lastTick && [now timeIntervalSinceDate:lastTick] < 0.5) return;
     lastTick = now;
     [self tick];
+}
+
+// Keep the end-of-video remaining time fresh from YTSingleVideoTime, so a
+// videoID change can be judged even when the runloop timer is suspended.
+- (void)noteSingleVideoTime:(YTSingleVideoTime *)time video:(YTSingleVideoController *)video {
+    if (self.mode != YMSleepTimerModeEndOfVideo || !time) return;
+    CGFloat total = video ? [video totalMediaTime] : 0.0;
+    if (total <= 0.0) return;
+    CGFloat remaining = total - time.time;
+    if (remaining < 0.0) remaining = 0.0;
+    self.capturedRemainingTime = remaining;
 }
 
 #pragma mark Volume fade
@@ -259,7 +309,7 @@ static NSString *YMSleepTimerFormatClock(NSTimeInterval interval) {
 #pragma mark Slim status bar
 
 - (void)notifyButtons {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"YouModUpdateNotification" object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"YouModUpdateSleepTimerButton" object:nil];
 }
 
 - (void)updateSlimBars {
@@ -461,6 +511,7 @@ void YMSleepTimerPresentPicker(UIView *sourceView) {
 - (void)singleVideo:(YTSingleVideoController *)video currentVideoTimeDidChange:(YTSingleVideoTime *)time {
     %orig;
     if (INTFORVAL(SleepTimerEntry) == 0) return;
+    [[YMSleepTimer shared] noteSingleVideoTime:time video:video];
     [[YMSleepTimer shared] playbackTick];
 }
 
@@ -468,6 +519,7 @@ void YMSleepTimerPresentPicker(UIView *sourceView) {
 - (void)potentiallyMutatedSingleVideo:(YTSingleVideoController *)video currentVideoTimeDidChange:(YTSingleVideoTime *)time {
     %orig;
     if (INTFORVAL(SleepTimerEntry) == 0) return;
+    [[YMSleepTimer shared] noteSingleVideoTime:time video:video];
     [[YMSleepTimer shared] playbackTick];
 }
 %end
@@ -506,7 +558,7 @@ void YMSleepTimerPresentPicker(UIView *sourceView) {
             return;
         }
         NSUInteger seq = ++slimBarReconnectSequence;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.75 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (seq != slimBarReconnectSequence) return; // flapped again meanwhile
             timer.connectionLost = NO;
             // YouTube may have reset the bar's appearance while disconnected,

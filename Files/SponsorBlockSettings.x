@@ -50,6 +50,7 @@ static NSArray<SBToggleRow *> *sbToggleRows() {
         [SBToggleRow key:SBEnabled title:@"SB_ENABLE" desc:@"SB_ENABLE_DESC"],
         [SBToggleRow key:SBShowButton title:@"SB_SHOW_BUTTON" desc:@"SB_SHOW_BUTTON_DESC"],
         [SBToggleRow key:SBShowNotifications title:@"SB_SHOW_NOTIFICATIONS" desc:@"SB_SHOW_NOTIFICATIONS_DESC"],
+        [SBToggleRow key:SBShowFullVideoLabel title:@"SB_SHOW_FULL_VIDEO_LABEL" desc:@"SB_SHOW_FULL_VIDEO_LABEL_DESC"],
         [SBToggleRow key:SBSegmentsInPlayer title:@"SB_SEGMENTS_IN_PLAYER" desc:@"SB_SEGMENTS_IN_PLAYER_DESC"],
         [SBToggleRow key:SBSegmentsInFeed title:@"SB_SEGMENTS_IN_FEED" desc:@"SB_SEGMENTS_IN_FEED_DESC"],
         [SBToggleRow key:SBSegmentsInMiniPlayer title:@"SB_SEGMENTS_IN_MINIPLAYER" desc:@"SB_SEGMENTS_IN_MINIPLAYER_DESC"],
@@ -583,7 +584,7 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
     if ([category isEqualToString:@"exclusive_access"]) {
         actionOptions = @[@(SBSegmentActionDisable), @(SBSegmentActionDisplay)];
     } else if (isHighlight) {
-        actionOptions = @[@(SBSegmentActionDisable), @(SBSegmentActionSkipTo), @(SBSegmentActionAlwaysSkip), @(SBSegmentActionAsk), @(SBSegmentActionDisplay)];
+        actionOptions = @[@(SBSegmentActionDisable), @(SBSegmentActionSkipTo), @(SBSegmentActionAsk), @(SBSegmentActionDisplay)];
     } else {
         actionOptions = @[@(SBSegmentActionDisable), @(SBSegmentActionAutoSkip), @(SBSegmentActionAlwaysSkip), @(SBSegmentActionAsk), @(SBSegmentActionDisplay)];
     }
@@ -728,47 +729,37 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
     return cell;
 }
 
-// All user-ID actions live in one dialog: a YouTube alert with a plain
-// system text field and the Cancel / Copy / Save buttons in order.
+// All user-ID actions live in one system alert: a plain text field with the
+// Cancel / Copy / Save actions in order.
 - (void)sbPresentUserIDDialogForRow:(NSInteger)row {
     BOOL isPublic = (row == 1);
     NSString *userID = isPublic ? sbPublicUserID() : sbLocalUserID();
     __weak typeof(self) weakSelf = self;
 
-    YTAlertView *alertView = [%c(YTAlertView) dialog];
-    alertView.title = LOC(isPublic ? @"SB_PUBLIC_ID" : @"SB_PRIVATE_ID");
-    alertView.shouldDismissOnBackgroundTap = YES;
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOC(isPublic ? @"SB_PUBLIC_ID" : @"SB_PRIVATE_ID")
+                                                                  message:nil
+                                                           preferredStyle:UIAlertControllerStyleAlert];
 
-    // Plain system text field with a light gray fill — dark mode uses the
-    // secondary background so it stays readable.
-    UITextField *field = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 238, 44)];
-    field.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    field.text = userID;
-    field.font = [UIFont monospacedSystemFontOfSize:14 weight:UIFontWeightRegular];
-    field.textColor = [UIColor labelColor];
-    field.borderStyle = UITextBorderStyleRoundedRect;
-    field.backgroundColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *trait) {
-        return (trait.userInterfaceStyle == UIUserInterfaceStyleDark)
-            ? [UIColor secondarySystemBackgroundColor]
-            : [UIColor systemGray5Color];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.text = userID;
+        field.font = [UIFont monospacedSystemFontOfSize:14 weight:UIFontWeightRegular];
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+        field.autocapitalizationType = UITextAutocapitalizationTypeNone;
+        field.autocorrectionType = UITextAutocorrectionTypeNo;
+        field.spellCheckingType = UITextSpellCheckingTypeNo;
+        field.keyboardType = UIKeyboardTypeASCIICapable;
+        field.returnKeyType = UIReturnKeyDone;
     }];
-    field.clearButtonMode = UITextFieldViewModeWhileEditing;
-    field.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    field.autocorrectionType = UITextAutocorrectionTypeNo;
-    field.spellCheckingType = UITextSpellCheckingTypeNo;
-    field.keyboardType = UIKeyboardTypeASCIICapable;
-    field.returnKeyType = UIReturnKeyDone;
 
-    alertView.customContentView = field;
-    alertView.customContentViewInsets = UIEdgeInsetsMake(0, 8, 4, 8);
+    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
 
-    [alertView addCancelButtonWithAction:nil];
-    [alertView addTitle:LOC(@"SB_COPY_ID") withAction:^{
+    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"SB_COPY_ID") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         UIPasteboard.generalPasteboard.string = userID;
         sbShowSBPill(LOC(@"SB_ID_COPIED"), YES);
-    }];
-    [alertView addTitle:LOC(@"SB_ID_SAVE") withAction:^{
-        NSString *newValue = [field.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    }]];
+
+    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:LOC(@"SB_ID_SAVE") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *newValue = [alert.textFields.firstObject.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         if (newValue.length < 30) {
             sbShowSBPill(LOC(@"SB_ID_INVALID"), NO);
             return;
@@ -782,11 +773,14 @@ static const void *kSBAllFlatRowsKey = &kSBAllFlatRowsKey;
         __strong typeof(weakSelf) strongSelf = weakSelf;
         [strongSelf.tableView reloadData];
     }];
-    [alertView show];
+    [alert addAction:saveAction];
+    alert.preferredAction = saveAction;
+
+    [self presentViewController:alert animated:YES completion:nil];
 
     // Focus the field once the alert has finished fading in.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [field becomeFirstResponder];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [alert.textFields.firstObject becomeFirstResponder];
     });
 }
 
@@ -998,7 +992,7 @@ NSArray<YMSearchRow *> *sbSearchRows(UIViewController *host) {
         @"hook":           @[@(SBSegmentActionDisable),  @"#395699"],
         @"poi_highlight":  @[@(SBSegmentActionDisable),  @"#FF006A"],
         @"filler":         @[@(SBSegmentActionDisable),  @"#7300FF"],
-        @"exclusive_access": @[@(SBSegmentActionDisplay), @"#008A5C"],
+        @"exclusive_access": @[@(SBSegmentActionDisable), @"#008A5C"],
     };
 
     NSMutableDictionary *defaults = [@{

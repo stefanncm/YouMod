@@ -2,7 +2,6 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <os/log.h>
-#import <dlfcn.h>
 
 static os_log_t YMDownloadLogHandle(void) {
     static os_log_t handle; static dispatch_once_t once;
@@ -12,12 +11,13 @@ static os_log_t YMDownloadLogHandle(void) {
 #define YMDownloadLog(fmt, ...) os_log(YMDownloadLogHandle(), "[YouMod] " fmt, ##__VA_ARGS__)
 
 @interface YMProgressMeter : NSObject
+@property (nonatomic, assign) unsigned long long expectedTotal;
 @property (nonatomic, assign) unsigned long long lastBytes;
 @property (nonatomic, assign) NSTimeInterval lastSample;
 @property (nonatomic, assign) double smoothedBytesPerSecond;
 @property (nonatomic, assign) NSTimeInterval startedAt;
 - (void)observeBytes:(unsigned long long)bytes;
-- (NSString *)captionForFraction:(float)fraction;
+- (NSString *)statusCaptionForCompletedBytes:(unsigned long long)completedBytes;
 - (double)averageBytesPerSecondFor:(unsigned long long)bytes;
 @end
 
@@ -37,6 +37,12 @@ static YMDownloadProgressView *gYMDownloadProgressView = nil;
 }
 
 - (void)observeBytes:(unsigned long long)bytes {
+    if (bytes < self.lastBytes) {
+        // A new phase (e.g. the next audio track) restarted its byte counter.
+        self.lastBytes = bytes;
+        self.lastSample = [NSDate timeIntervalSinceReferenceDate];
+        return;
+    }
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval dt = now - self.lastSample;
     if (dt >= 0.4) {
@@ -52,10 +58,19 @@ static YMDownloadProgressView *gYMDownloadProgressView = nil;
     }
 }
 
-- (NSString *)captionForFraction:(float)fraction {
+static NSString *YMDLByteCountString(unsigned long long bytes) {
+    if (bytes < 1) return @"0 B";
+    NSByteCountFormatter *fmt = [NSByteCountFormatter new];
+    fmt.countStyle = NSByteCountFormatterCountStyleFile;
+    return [fmt stringFromByteCount:(long long)bytes];
+}
+
+- (NSString *)statusCaptionForCompletedBytes:(unsigned long long)completedBytes {
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
-    if (fraction > 0) {
-        [parts addObject:[NSString stringWithFormat:@"%.0f%%", fminf(fraction, 1.0f) * 100.0f]];
+    if (self.expectedTotal > 0 && completedBytes > 0) {
+        unsigned long long done = completedBytes > self.expectedTotal ? self.expectedTotal : completedBytes;
+        [parts addObject:[NSString stringWithFormat:@"%@ / %@",
+                          YMDLByteCountString(done), YMDLByteCountString(self.expectedTotal)]];
     }
     if (self.smoothedBytesPerSecond > 1024) {
         NSByteCountFormatter *fmt = [NSByteCountFormatter new];
@@ -64,7 +79,7 @@ static YMDownloadProgressView *gYMDownloadProgressView = nil;
         [parts addObject:[NSString stringWithFormat:@"%@/s",
                           [fmt stringFromByteCount:(long long)self.smoothedBytesPerSecond]]];
     }
-    return [parts componentsJoinedByString:@"  ·  "];
+    return [parts componentsJoinedByString:@" · "];
 }
 
 - (double)averageBytesPerSecondFor:(unsigned long long)bytes {
@@ -222,6 +237,7 @@ static void YMDownloadFail(NSString *message, NSArray<NSURL *> *temporaries) {
     for (NSURL *url in temporaries) {
         [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
     }
+    if (!gYMDownloadBusy) return;
     dispatch_async(dispatch_get_main_queue(), ^{
         gYMDownloadBusy = NO;
         [gYMDownloadProgressView dismiss];
@@ -308,6 +324,25 @@ void YMDownloadStart(YMFormat *video, NSArray<YMFormat *> *audioTracks, NSArray<
     }
     gYMDownloadBusy = YES;
     gYMDownloadMeter = [YMProgressMeter new];
+    unsigned long long expectedTotal = video ? (unsigned long long)video.contentLength : 0;
+    for (YMFormat *track in audioTracks) expectedTotal += (unsigned long long)track.contentLength;
+    gYMDownloadMeter.expectedTotal = expectedTotal;
+    __block unsigned long long completedBeforePhase = 0;
+    // Pushes cumulative progress into the download pill: percent in the title,
+    // downloaded/total bytes and speed in the subtitle. `phaseFraction` is only
+    // a fallback for when the expected sizes are unknown.
+    void (^reportProgress)(float, unsigned long long, BOOL) = ^(float phaseFraction, unsigned long long completedBytes, BOOL isAudio) {
+        [gYMDownloadMeter observeBytes:completedBytes];
+        float overall = expectedTotal > 0 ? (float)((double)completedBytes / (double)expectedTotal) : phaseFraction;
+        if (overall > 1.0f) overall = 1.0f;
+        NSString *title = [NSString stringWithFormat:@"%@  %.0f%%",
+                           LOC(isAudio ? @"DOWNLOADING_AUDIO" : @"DOWNLOADING_VIDEO"),
+                           (double)overall * 100.0];
+        NSString *subtitle = [gYMDownloadMeter statusCaptionForCompletedBytes:completedBytes];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [gYMDownloadProgressView updateProgress:overall title:title subtitle:subtitle];
+        });
+    };
     NSString *msg = LOC(video ? @"DOWNLOADING_VIDEO" : @"DOWNLOADING_AUDIO");
     gYMDownloadProgressView = [YMDownloadProgressView showInView:sbGetNotificationParent()
                                                          message:msg
@@ -315,18 +350,12 @@ void YMDownloadStart(YMFormat *video, NSArray<YMFormat *> *audioTracks, NSArray<
                                                         [YMSABR cancelCurrent];
                                                         gYMDownloadBusy = NO;
                                                         gYMDownloadProgressView = nil;
-                                                        YouModSendToast(LOC(@"DOWNLOAD_CANCELLED"));
+                                                        YouModSendError(LOC(@"DOWNLOAD_CANCELLED"));
                                                     }];
     YMFormat *audio = audioTracks.firstObject;
     if (video) {
         [YMSABR downloadVideoItag:video.itag audioItag:audio.itag audioStream:audio.source progress:^(float fraction, unsigned long long bytes, BOOL isAudio) {
-            [gYMDownloadMeter observeBytes:bytes];
-            NSString *caption = [gYMDownloadMeter captionForFraction:fraction];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [gYMDownloadProgressView updateProgress:fraction
-                                                  title:LOC(isAudio ? @"DOWNLOADING_AUDIO" : @"DOWNLOADING_VIDEO")
-                                               subtitle:caption];
-            });
+            reportProgress(fraction, completedBeforePhase + bytes, isAudio);
         } completion:^(NSURL *videoURL, NSURL *audioURL, NSString *err) {
             if (!videoURL || !audioURL || err) {
                 YMDownloadFail(err, @[]);
@@ -346,6 +375,7 @@ void YMDownloadStart(YMFormat *video, NSArray<YMFormat *> *audioTracks, NSArray<
                 }
             }
             NSMutableArray<NSURL *> *audioURLs = [NSMutableArray arrayWithObject:audioURL];
+            completedBeforePhase += (unsigned long long)video.contentLength + (unsigned long long)audio.contentLength;
             __block NSUInteger nextAudio = 1;
             NSMutableArray *nextBox = [NSMutableArray arrayWithObject:[NSNull null]];
             void (^downloadNextAudio)(void) = ^{
@@ -354,8 +384,11 @@ void YMDownloadStart(YMFormat *video, NSArray<YMFormat *> *audioTracks, NSArray<
                     return;
                 }
                 YMFormat *next = audioTracks[nextAudio++];
-                [YMSABR downloadAudioItag:next.itag audioStream:next.source progress:nil completion:^(NSURL *url, NSString *error) {
+                [YMSABR downloadAudioItag:next.itag audioStream:next.source progress:^(float fraction, unsigned long long bytes) {
+                    reportProgress(fraction, completedBeforePhase + bytes, YES);
+                } completion:^(NSURL *url, NSString *error) {
                     if (!url || error) { YMDownloadFail(error, audioURLs); return; }
+                    completedBeforePhase += (unsigned long long)next.contentLength;
                     [audioURLs addObject:url];
                     id next = nextBox.firstObject;
                     if (next != [NSNull null]) ((void (^)(void))next)();
@@ -375,20 +408,17 @@ void YMDownloadStart(YMFormat *video, NSArray<YMFormat *> *audioTracks, NSArray<
             }
             YMFormat *currentAudio = audioTracks[nextAudio++];
             [YMSABR downloadAudioItag:currentAudio.itag audioStream:currentAudio.source progress:^(float fraction, unsigned long long bytes) {
-            [gYMDownloadMeter observeBytes:bytes];
-            NSString *caption = [gYMDownloadMeter captionForFraction:fraction];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [gYMDownloadProgressView updateProgress:fraction title:LOC(@"DOWNLOADING_AUDIO") subtitle:caption];
-            });
+                reportProgress(fraction, completedBeforePhase + bytes, YES);
             } completion:^(NSURL *audioURL, NSString *err) {
-            if (!audioURL || err) {
-                YMDownloadFail(err, audioURLs);
-                return;
-            }
-            [audioURLs addObject:audioURL];
-            id next = nextBox.firstObject;
-            if (next != [NSNull null]) ((void (^)(void))next)();
-        }];
+                if (!audioURL || err) {
+                    YMDownloadFail(err, audioURLs);
+                    return;
+                }
+                completedBeforePhase += (unsigned long long)currentAudio.contentLength;
+                [audioURLs addObject:audioURL];
+                id next = nextBox.firstObject;
+                if (next != [NSNull null]) ((void (^)(void))next)();
+            }];
         };
         nextBox[0] = [downloadNextAudio copy];
         downloadNextAudio();

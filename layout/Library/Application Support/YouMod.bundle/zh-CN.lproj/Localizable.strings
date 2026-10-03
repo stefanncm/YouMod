@@ -22,8 +22,8 @@
 "SOURCE_CODES_DESC" = "来看看代码吧！";
 
 "EXTRA" = "额外";
-"FIX_PLAYBACK_ISSUES" = "修复播放问题（临时）";
-"FIX_PLAYBACK_ISSUES_DESC" = "尝试修复部分用户的视频播放问题。开启后，播放器出错或播放失败时会自动重新加载。";
+"FIX_PLAYBACK_ISSUES" = "Fix playback issues (Experimental)";
+"FIX_PLAYBACK_ISSUES_DESC" = "This option is still experimental and may not work for some users.";
 
 "PERFER_HEADER" = "YouMod 偏好设置";
 "PERFER" = "偏好设置";
@@ -159,6 +159,8 @@
 "HIDE_CAST_BUTTON_NAVBAR_DESC" = "隐藏导航栏中的投屏按钮。";
 "HIDE_MESSAGES_BUTTON" = "Hide messages button";
 "HIDE_MESSAGES_BUTTON_DESC" = "Hide messages button in the navigation bar.";
+"HIDE_MORE_BUTTON_NAV" = "Hide more button";
+"HIDE_MORE_BUTTON_NAV_DESC" = "Hide the more (three-dot) button in the navigation bar.";
 
 "FEED" = "信息流";
 "HIDE_SUBBAR" = "隐藏子栏";
@@ -202,6 +204,8 @@
 "AUDIO_TRACK_SELECT_DESC" = "指定播放时使用的首选音轨语言（如可用）。";
 "NO_AUTO_DUBBED" = "使用原声音轨";
 "NO_AUTO_DUBBED_DESC" = "如果首选语言音轨是自动配音或未找到，则使用原声音轨。";
+"NO_AUTO_TRANSLATED_TITLES" = "Original video titles";
+"NO_AUTO_TRANSLATED_TITLES_DESC" = "Shows video titles in their original language instead of YouTube's automatic translation, where the original title is provided.";
 "CAPTION_TRACK" = "首选字幕";
 "CAPTION_TRACK_SELECT" = "已选字幕";
 "CAPTION_TRACK_SELECT_DESC" = "指定显示的首选字幕语言（如可用）。";
@@ -225,6 +229,8 @@
 "OVERLAY_BUTTONS_EMPTY" = "无按钮";
 "REMOVE_ADS" = "移除广告";
 "REMOVE_ADS_DESC" = "移除应用内的广告，游戏除外";
+"HIDE_SPONSOR_BUTTON" = "Hide sponsor button";
+"HIDE_SPONSOR_BUTTON_DESC" = "Hide the sponsor button under the video and in the Shorts overlay.";
 "HOLD_TO_SPEED" = "长按加速";
 "HOLD_TO_SPEED_DESC" = "使用自定义长按加速播放倍速。";
 "HIDE_AUTOPLAY" = "隐藏自动播放开关";
@@ -380,12 +386,20 @@
 "REMOVE_SHORTS_LIKE_BUTTON_DESC" = "移除 Shorts 播放界面的点赞按钮。";
 "REMOVE_SHORTS_COMMENT_BUTTON" = "移除评论按钮";
 "REMOVE_SHORTS_COMMENT_BUTTON_DESC" = "移除 Shorts 播放界面的评论按钮。";
+"REMOVE_SHORTS_COMMENT_BAR" = "Remove comment box";
+"REMOVE_SHORTS_COMMENT_BAR_DESC" = "Removes the comment box from the Shorts overlay.";
+"REMOVE_SHORTS_RELATED_BUTTONS" = "Remove related Shorts metadata buttons";
+"REMOVE_SHORTS_RELATED_BUTTONS_DESC" = "Hide the buttons under the video title in the Shorts overlay.";
+"REMOVE_SHORTS_SAVE_BUTTON" = "移除保存按钮";
+"REMOVE_SHORTS_SAVE_BUTTON_DESC" = "移除 Shorts 播放界面的保存按钮。";
 "REMOVE_SHORTS_SHARE_BUTTON" = "移除分享按钮";
 "REMOVE_SHORTS_SHARE_BUTTON_DESC" = "移除 Shorts 播放界面的分享按钮。";
 "REMOVE_SHORTS_REMIX_BUTTON" = "移除混剪按钮";
 "REMOVE_SHORTS_REMIX_BUTTON_DESC" = "移除 Shorts 播放界面的混剪按钮。";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON" = "移除原声/音频按钮";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON_DESC" = "移除 Shorts 播放界面的原声/音频按钮。";
+"REMOVE_SHORTS_SUB_BUTTON" = "Remove subscribe button";
+"REMOVE_SHORTS_SUB_BUTTON_DESC" = "Removes the subscribe button from the Shorts overlay.";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON" = "移除订阅按钮";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON_DESC" = "移除 Shorts 暂停界面顶部的订阅按钮。";
 "REMOVE_SHORTS_PAUSED_LIVE_BUTTON" = "移除直播按钮";
@@ -398,6 +412,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "强制在 Shorts 中启用视频画质选择菜单。";
 "SHOW_SHORTS_SEEKBAR" = "始终显示进度条";
 "SHOW_SHORTS_SEEKBAR_DESC" = "确保进度条始终显示在 Shorts 播放器底部。";
+"DEFAULT_SPEED_SHORTS" = "Shorts default playback rate";
+"DEFAULT_SPEED_SHORTS_DESC" = "Overrides the default playback speed for Shorts, separate from regular videos.";
 "REMOVE_POSTS_SHORTS" = "移除帖子";
 "REMOVE_POSTS_SHORTS_DESC" = "从信息流中移除帖子。";
 "SHORTS_FULLSCREEN" = "捏合全屏";
@@ -512,6 +528,8 @@
 "HIDE_COMMUNITY_BUTTON_PANEL_DESC" = "Hide the community button in the engagement panel.";
 "HIDE_INFO_BUTTON_PANEL" = "Hide info button";
 "HIDE_INFO_BUTTON_PANEL_DESC" = "Hide the info button in the engagement panel.";
+"HIDE_SORT_FILTER_PANEL" = "Hide sort & filter button";
+"HIDE_SORT_FILTER_PANEL_DESC" = "Hide the sort and filter button from the top of the panel (except in live).";
 "DISABLES_RTL" = "禁用 RTL 格式";
 "DISABLES_RTL_DESC" = "强制以从左到右 (LTR) 格式显示最初为从右到左 (RTL) 显示的语言文本。";
 "DEVICE_UI" = "界面风格";
@@ -538,6 +556,8 @@
 "SB_SEGMENTS_IN_MINIPLAYER_DESC" = "在迷你播放器的进度条上显示彩色片段。";
 "SB_SHOW_DURATION" = "显示不含片段的时长";
 "SB_SHOW_DURATION_DESC" = "显示不含可跳过片段的总视频时长。";
+"SB_SHOW_FULL_VIDEO_LABEL" = "显示整段视频标签";
+"SB_SHOW_FULL_VIDEO_LABEL_DESC" = "当视频被标记为覆盖整段视频的类别（如 Exclusive Access）时显示横幅。";
 "SB_CATEGORIES_HEADER" = "片段分类";
 "SB_SEGMENT_COLOR" = "片段颜色";
 
@@ -549,25 +569,15 @@
 "SB_ACTION_SKIP_TO" = "跳至片段";
 
 "SB_CAT_sponsor" = "赞助广告";
-"SB_CAT_sponsor_DESC" = "与创作者无直接关联的产品或服务的付费推广内容。";
 "SB_CAT_intro" = "片头/转场";
-"SB_CAT_intro_DESC" = "通常出现在视频开头的转场或片头动画。";
 "SB_CAT_outro" = "片尾/鸣谢";
-"SB_CAT_outro_DESC" = "视频末尾的片尾卡片、演职员表或结束画面。";
 "SB_CAT_interaction" = "互动提醒";
-"SB_CAT_interaction_DESC" = "提醒观众点赞、订阅或关注社交媒体的片段。";
 "SB_CAT_selfpromo" = "自我推广";
-"SB_CAT_selfpromo_DESC" = "创作者对自己产品、周边或其它内容的无报酬推广。";
 "SB_CAT_music_offtopic" = "非音乐片段";
-"SB_CAT_music_offtopic_DESC" = "音乐视频中的非音乐部分（如讲话、剧情对话或过场）。";
 "SB_CAT_preview" = "精彩预告/前情回顾";
-"SB_CAT_preview_DESC" = "回顾之前的内容或本期/下期视频的精彩预告。";
 "SB_CAT_hook" = "引言/问候";
-"SB_CAT_hook_DESC" = "视频开头的快速内容概括或问候打招呼。";
 "SB_CAT_poi_highlight" = "高光时刻";
-"SB_CAT_poi_highlight_DESC" = "视频的最精彩或核心片段。可使用“跳至”快速跳转。";
 "SB_CAT_filler" = "过渡/无意义填充";
-"SB_CAT_filler_DESC" = "与视频主题无关的闲聊、笑话或填充片段。";
 
 "SB_SKIPPED" = "已跳过 %@ 片段";
 "SB_DETECTED" = "检测到 %@ 片段。\n是否跳过该片段？";
@@ -597,6 +607,25 @@
 "SB_VOTE_SUCCESS" = "Vote submitted";
 "SB_VOTE_FAILED" = "Vote failed";
 "SB_VOTE_NO_SEGMENTS" = "No segments for this video";
+"SB_CAT_exclusive_access" = "Exclusive Access";
+"SB_FULL_VIDEO_LABEL" = "This video is labeled: %@";
+"SB_DETECTED_MUTE" = "%@ segment detected.\nWould you like to mute the segment?";
+"SB_MUTE_NOW" = "Mute";
+"SB_MENU_SUBMIT" = "Submit segment";
+"SB_SUBMIT_TITLE" = "New segment";
+"SB_SUBMIT_MESSAGE" = "Play the video to the moment you want to mark, then tap Set start / Set end. Only submit accurate segments.";
+"SB_SUBMIT_CATEGORY" = "Category";
+"SB_SUBMIT_SET_START" = "Set start to current time";
+"SB_SUBMIT_SET_END" = "Set end to current time";
+"SB_SUBMIT_SET_HIGHLIGHT" = "Set highlight to current time";
+"SB_SUBMIT_NOT_SET" = "Not set";
+"SB_SUBMIT_PREVIEW" = "Preview from start";
+"SB_SUBMIT_SEND" = "Submit";
+"SB_SUBMIT_SUCCESS" = "Segment submitted";
+"SB_SUBMIT_FAILED" = "Submission failed";
+"SB_SUBMIT_DUPLICATE" = "This segment was already submitted";
+"SB_SUBMIT_RATE_LIMIT" = "Too many submissions, try again later";
+"SB_SUBMIT_INVALID" = "Set a valid start and end first";
 "SB_WHITELIST_ADD" = "Add to whitelist";
 "SB_WHITELIST_REMOVE" = "Remove from whitelist";
 "SB_WHITELIST_DESC" = "SponsorBlock will be disabled for this channel.";
@@ -618,15 +647,21 @@
 // Keys synced from en.lproj (English base)
 "HIDE_AUTO_DUBBED_DOWNLOADS" = "Hide auto-dubbed audio tracks";
 "HIDE_AUTO_DUBBED_DOWNLOADS_DESC" = "Hides AI auto-dubbed audio tracks from the download sheet's soundtrack picker.";
-"DOWNLOAD_LIBRARY_TAB" = "Downloads";
+"DOWNLOAD_LIBRARY_TAB" = "Download library";
 "DOWNLOAD_LIBRARY_TAB_DESC" = "Adds a tab that lists every downloaded video with thumbnails and sizes.";
 "DOWNLOAD_LIBRARY_EMPTY" = "No downloads yet";
+
 "LIBRARY_OPEN_VIDEO" = "Open Video on YouTube";
 "LIBRARY_NO_VIDEO_ID" = "Couldn't find this video's ID";
 "LIBRARY_SHARE" = "Share";
 "LIBRARY_SAVE_THUMBNAIL" = "Save Thumbnail to Photos";
 "LIBRARY_VIEW_INFO" = "View Info";
 "LIBRARY_DELETE" = "Delete";
+"LIBRARY_RENAME" = "重命名";
+"LIBRARY_RENAME_TITLE" = "重命名文件";
+"LIBRARY_RENAMED" = "文件已重命名";
+"LIBRARY_RENAME_EMPTY" = "名称不能为空";
+"LIBRARY_RENAME_FAILED" = "重命名文件失败";
 "OK" = "OK";
 "LIBRARY_INFO_SIZE" = "Size";
 "LIBRARY_INFO_DURATION" = "Duration";
@@ -662,16 +697,16 @@
 "FILES_HINT_VIDEO" = "%@ video is more efficient and higher quality, but the built-in iOS player cannot play it. Use a player like VLC.";
 "FILES_HINT_AUDIO" = "%@ audio is more efficient, but the built-in iOS player cannot play it. Use a player like VLC.";
 "FILES_HINT_COMPATIBLE" = "H.264 video with AAC audio — plays in the built-in iOS player.";
+"FILES_HINT_AUDIO_COMPATIBLE" = "AAC audio — plays in the built-in iOS player.";
 "AUDIO_ORIGINAL" = "Original";
-"AUDIO_ORIGINAL_LANG" = "%@ [Original]";
 "AUDIO_AUTO_DUBBED" = "%@ [AI]";
-"AUDIO_DUBBED" = "%@";
 "SLEEP_TIMER" = "Sleep Timer";
 "SLEEP_TIMER_OFF" = "Turn off timer";
 "SLEEP_TIMER_REMAINING_FMT" = "Time left: %@";
 "SLEEP_TIMER_MINUTES_FMT" = "%ld min";
 "SLEEP_TIMER_END_OF_VIDEO" = "End of video";
 "SLEEP_TIMER_TIME_UP" = "Sleep timer ended. Playback paused";
+"SLEEP_TIMER_VIDEO_CHANGED" = "Video changed. Sleep timer turned off";
 "SLEEP_TIMER_CUSTOM_TIME" = "Pick a time...";
 "SLEEP_TIMER_ENTRY" = "Sleep Timer";
 "SLEEP_TIMER_ENTRY_DESC" = "Where the Sleep Timer entry point appears.";

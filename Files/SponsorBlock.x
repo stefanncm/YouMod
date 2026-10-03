@@ -430,14 +430,24 @@ static void sbSendViewedSegment(SBSegment *segment) {
         return;
     }
 
+    // Clear the previous video's markers right away — the fetch below repopulates
+    // them when it lands.
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
+                                                        object:self
+                                                      userInfo:@{@"segments": @[]}];
+
     __weak typeof(self) weakSelf = self;
     [SBRequest fetchSegmentsForVideoID:videoID completion:^(NSArray<SBSegment *> *segments) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) return;
+        // The player may have moved on to another video while this request was
+        // in flight; drop the late result so it can't overwrite the newer one.
+        // The newer video's own fetch posts when it lands.
+        if (![[strongSelf currentVideoID] isEqualToString:videoID]) return;
         strongSelf.sbSegments = segments;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"SBSegmentsDidLoad"
                                                             object:strongSelf
-                                                            userInfo:@{@"segments": segments ?: @[]}];
+                                                          userInfo:@{@"segments": segments ?: @[]}];
 
         [strongSelf sbShowHighlightBannerIfNeeded:segments];
         [strongSelf sbShowFullVideoLabelIfNeeded:segments];
@@ -540,6 +550,7 @@ static void sbSendViewedSegment(SBSegment *segment) {
 }
 %new
 - (void)sbShowFullVideoLabelIfNeeded:(NSArray<SBSegment *> *)segments {
+    if (!IS_ENABLED(SBShowFullVideoLabel)) return;
     if (!sbActiveForVideo(self) || self.isPlayingAd) return;
     for (SBSegment *segment in segments) {
         if (![segment.actionType isEqualToString:@"full"]) continue;

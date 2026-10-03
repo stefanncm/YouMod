@@ -593,7 +593,7 @@ static void YouModAddEndTime(YTInlinePlayerBarContainerView *playerbar, YTPlayer
             }
 
             YTMainAppVideoPlayerOverlayViewController *ovcon = (YTMainAppVideoPlayerOverlayViewController *)self._viewControllerForAncestor;
-            YTPlayerViewController *pvcon = ovcon.parentViewController;
+            YTPlayerViewController *pvcon = (YTPlayerViewController *)ovcon.parentViewController;
             CGFloat totalDuration = [pvcon currentVideoTotalMediaTime];
             CGFloat targetTime = totalDuration * percentage;    
             [pvcon seekToTime:targetTime];
@@ -651,7 +651,7 @@ static void YouModAddEndTime(YTInlinePlayerBarContainerView *playerbar, YTPlayer
     YouModApplyPrevNextReplacement(self);
     if (!IS_ENABLED(PauseOnOverlay)) return;
     YTMainAppVideoPlayerOverlayViewController *mainOverlayController = (YTMainAppVideoPlayerOverlayViewController *)self.eventsDelegate;
-    YTPlayerViewController *playerViewController = mainOverlayController.parentViewController;
+    YTPlayerViewController *playerViewController = (YTPlayerViewController *)mainOverlayController.parentViewController;
     visible ? [playerViewController pause] : [playerViewController play];
 }
 %end
@@ -930,7 +930,10 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
     if (IS_ENABLED(HideCastButtonPlayer) && self.playbackRouteButton != nil) self.playbackRouteButton.hidden = YES;
 }
 - (void)setFullscreenActionsView:(YTFullscreenActionsView *)actionsView {
-    if (IS_ENABLED(HideFullAction) && actionsView == nil) actionsView = [%c(YTFullscreenActionsView) new];
+    if (IS_ENABLED(HideFullAction) && actionsView == nil) {
+        if (self.fullscreenActionsView) return;
+        else actionsView = [%c(YTFullscreenActionsView) new];
+    }
     %orig(actionsView);
 }
 %end
@@ -1061,7 +1064,9 @@ static CGFloat YouModSpeedForHoldIndex(NSInteger index) {
         if (!playerViewController.YouModHoldGesture && INTFORVAL(HoldToSpeedIndex) != 0) {
             playerViewController.YouModHoldGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:playerViewController action:@selector(YouModHoldToSpeed:)];
             playerViewController.YouModHoldGesture.minimumPressDuration = 0.4;
-            [pv addGestureRecognizer:playerViewController.YouModHoldGesture];   
+            playerViewController.YouModHoldGesture.numberOfTouchesRequired = 1;
+            playerViewController.YouModHoldGesture.delegate = playerViewController;
+            [pv addGestureRecognizer:playerViewController.YouModHoldGesture];
         }
     }
     %orig;
@@ -1174,15 +1179,6 @@ static UISlider *YouModVolumeSlider(void) {
 
             return YES;
         }
-    }
-    if (gestureRecognizer == self.YouModHoldGesture) {
-        if (self.YouModPanGesture && (self.YouModPanGesture.state == UIGestureRecognizerStateBegan || self.YouModPanGesture.state == UIGestureRecognizerStateChanged)) {
-            return NO;
-        }
-        if (isRelatedVideosPanelEnabled(self)) return NO;
-        CGPoint touchLocation = [gestureRecognizer locationInView:self.view];
-        CGFloat activeWidth = remainingOverlayWidth(self, self.view.bounds.size.width);
-        if (touchLocation.x > activeWidth) return NO;
     }
     return YES;
 }
@@ -1395,21 +1391,12 @@ static UISlider *YouModVolumeSlider(void) {
     if (gestureRecognizer == self.YouModPanGesture && [otherGestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]]) {
         return YES;
     }
-    if (gestureRecognizer == self.YouModHoldGesture && ![otherGestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]]) {
-        return YES;
-    }
     return NO;
 }
 
 %new
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
-    if (gestureRecognizer == self.YouModPanGesture) return NO; 
-    if (gestureRecognizer == self.YouModHoldGesture || otherGestureRecognizer == self.YouModHoldGesture) {
-        if ([gestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]] || [otherGestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]]) {
-            return NO;
-        }
-        return YES;
-    }
+    if (gestureRecognizer == self.YouModPanGesture) return NO;
     return YES;
 }
 
@@ -1451,9 +1438,10 @@ static UISlider *YouModVolumeSlider(void) {
         [self setPlaybackRate:speed];
         return;
     }
-    if (INTFORVAL(AutoSpeedIndex) == 0) return;
+    NSInteger speedIndex = [self.parentViewController isKindOfClass:%c(YTShortsPlayerViewController)] ? INTFORVAL(ShortsAutoSpeedIndex) : INTFORVAL(AutoSpeedIndex);
+    if (speedIndex == 0) return;
     NSArray *speedLabels = @[@0.01, @0.25, @0.5, @0.75, @1.0, @1.25, @1.5, @1.75, @2.0, @3.0, @4.0, @5.0];
-    [self setPlaybackRate:[speedLabels[INTFORVAL(AutoSpeedIndex)] floatValue]];
+    [self setPlaybackRate:[speedLabels[speedIndex] floatValue]];
 }
 
 - (void)setMuted:(BOOL)muted { 
@@ -1664,6 +1652,7 @@ static UISlider *YouModVolumeSlider(void) {
     static CGPoint startLocation;
     static BOOL initialLockState;
     static BOOL isPendingToggle;
+    static BOOL holdGestureActive = NO;
 
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
@@ -1694,8 +1683,9 @@ static UISlider *YouModVolumeSlider(void) {
             [self setPlaybackRate:speed];
             [self YouModShowSpeedToast:speed isLocked:YES];
         }
+        holdGestureActive = YES;
     } else if (gesture.state == UIGestureRecognizerStateChanged) {
-        if (!IS_ENABLED(LockSpeed)) return;
+        if (!holdGestureActive || !IS_ENABLED(LockSpeed)) return;
         
         CGPoint currentLocation = [gesture locationInView:self.playerView];
         CGFloat dragDistanceY = currentLocation.y - startLocation.y;
@@ -1734,6 +1724,10 @@ static UISlider *YouModVolumeSlider(void) {
                gesture.state == UIGestureRecognizerStateCancelled || 
                gesture.state == UIGestureRecognizerStateFailed) {
 
+        // Began never ran (gesture failed or was suppressed): nothing was applied, so
+        // restoring/applying a rate here would flash the speed on touch-up
+        if (!holdGestureActive) return;
+
         BOOL finalLockState = initialLockState;
         if (gesture.state == UIGestureRecognizerStateEnded || (gesture.state == UIGestureRecognizerStateCancelled && isPendingToggle)) {
             if (IS_ENABLED(LockSpeed) && isPendingToggle) {
@@ -1749,6 +1743,7 @@ static UISlider *YouModVolumeSlider(void) {
             [self setPlaybackRate:targetRate];
         }
         isPendingToggle = NO;
+        holdGestureActive = NO;
         [self YouModHideSpeedToast];
     }
 }
@@ -1760,38 +1755,6 @@ static UISlider *YouModVolumeSlider(void) {
     [self setAudioDRCEnabled:value];
 }
 %end
-
-void YouModFilterNonScrollableVideoButtons(_ASDisplayView *view, NSString *iden) {
-    if (![view.accessibilityIdentifier isEqualToString:@"id.video.non_scrollable_action_bar"]) return;
-    for (_ASDisplayView *sub in view.subviews) {
-        _ASDisplayView *removal = sub;
-        while (removal != nil && removal.subviews.count == 1 && removal.accessibilityIdentifier == nil) {
-            removal = removal.subviews[0];
-        }
-        BOOL shouldFilter = NO;
-        NSDictionary *buttonsList = @{
-            @"id.video.like.button": @(IS_ENABLED(RemoveVideoLikeButton)),
-            @"id.video.dislike.button": @(IS_ENABLED(RemoveVideoDislikeButton)),
-            @"id.video.share.button": @(IS_ENABLED(RemoveVideoShareButton)),
-            @"id.video.add_to.button": @(IS_ENABLED(RemoveVideoSaveButton)),
-            @"clip_button.eml": @(IS_ENABLED(RemoveVideoClipButton)),
-            @"id.video.remix.button": @(IS_ENABLED(RemoveVideoRemixButton)),
-            @"id.ui.add_to.offline.button": @(IS_ENABLED(RemoveVideoDownloadButton)),
-            @"id.player.chat.toggle.button" : @(IS_ENABLED(RemoveVideoLiveChatButton))
-        };
-        for (NSString *button in buttonsList) {
-            if ([removal.accessibilityIdentifier isEqualToString:button] && [buttonsList[button] boolValue]) {
-                shouldFilter = YES;
-                break;
-            }
-        }
-        if (shouldFilter) {
-            ASDisplayNode *node = sub.keepalive_node;
-            [node removeYogaChild:node.yogaChildren.firstObject];
-            [sub removeFromSuperview];
-        }
-    }
-}
 
 void YouModRemoveFullscreenActionsButtons(YTELMViewController *controller) {
     _ASDisplayView *view = (_ASDisplayView *)controller.view.subviews[0];
@@ -1839,63 +1802,72 @@ void YouModRemoveFullscreenActionsButtons(YTELMViewController *controller) {
     }
 }
 
+/*
 // Video buttons filtering
 void YouModFilterVideoButtons(_ASDisplayView *view, NSString *iden) {
-    if (!iden || iden.length == 0 || !isPad()) return;
-    BOOL shouldFilter = NO;
-    if ([iden isEqualToString:@"id.video.share.button"] && IS_ENABLED(RemoveVideoShareButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"id.video.add_to.button"] && IS_ENABLED(RemoveVideoSaveButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"id.ui.add_to.offline.button"] && IS_ENABLED(RemoveVideoDownloadButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"clip_button.eml"] && IS_ENABLED(RemoveVideoClipButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"id.video.remix.button"] && IS_ENABLED(RemoveVideoRemixButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"id.video.like.button"] && IS_ENABLED(RemoveVideoLikeButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"id.video.dislike.button"] && IS_ENABLED(RemoveVideoDislikeButton)) {
-        shouldFilter = YES;
-    } else if ([iden isEqualToString:@"id.player.chat.toggle.button"] && IS_ENABLED(RemoveVideoLiveChatButton)) {
-        shouldFilter = YES;
-    }
-    if (!shouldFilter) return;
-
-    UIViewController *con = view._viewControllerForAncestor;
-    if ([con isKindOfClass:%c(YTWatchNextResultsViewController)]) {
-        BOOL isSpecialButton = ([iden isEqualToString:@"id.video.like.button"] || [iden isEqualToString:@"id.video.dislike.button"]);
-        if (!isSpecialButton) {
-            UIView *actualMainView = view.superview;
-            while (actualMainView != nil && ![actualMainView isKindOfClass:%c(_ASCollectionViewCell)]) {
-                actualMainView = actualMainView.superview;
-            }
-            if (actualMainView) {
-                ASCellNode *node = ((_ASCollectionViewCell *)actualMainView).node;
-                NSArray *children = [node.yogaChildren copy];
-                for (UIView *child in children) {
-                    [node removeYogaChild:child];
-                }
-                [actualMainView removeFromSuperview];
-            }
-        } else {
+    if (!iden || iden.length == 0) return;
+    int boolCount = 0;
+    if (IS_ENABLED(RemoveVideoLikeButton)) boolCount++;
+    if (IS_ENABLED(RemoveVideoDislikeButton)) boolCount++;
+    NSDictionary *buttonsList = @{
+        @"id.video.like.button": @(IS_ENABLED(RemoveVideoLikeButton)),
+        @"id.video.dislike.button": @(IS_ENABLED(RemoveVideoDislikeButton)),
+        @"id.video.share.button": @(IS_ENABLED(RemoveVideoShareButton)),
+        @"id.video.add_to.button": @(IS_ENABLED(RemoveVideoSaveButton)),
+        @"clip_button.eml": @(IS_ENABLED(RemoveVideoClipButton)),
+        @"id.video.remix.button": @(IS_ENABLED(RemoveVideoRemixButton)),
+        @"id.ui.add_to.offline.button": @(IS_ENABLED(RemoveVideoDownloadButton)),
+        @"id.player.chat.toggle.button" : @(IS_ENABLED(RemoveVideoLiveChatButton))
+    };
+    for (NSString *button in buttonsList) {
+        if ([iden isEqualToString:button] && [buttonsList[button] boolValue]) {
+            BOOL isSpecialButton = ([iden isEqualToString:@"id.video.like.button"] || [iden isEqualToString:@"id.video.dislike.button"]);
             _ASDisplayView *dpView = (_ASDisplayView *)view.superview;
-            if (dpView) {
-                ASDisplayNode *node = dpView.keepalive_node;
-                NSArray *children = [node.yogaChildren copy];
-                for (UIView *child in children) {
-                    NSString *desc = [child description];
-                    if ([desc containsString:iden]) {
+            ASDisplayNode *node = dpView.keepalive_node;
+            for (ASDisplayNode *child in node.yogaChildren) {
+                if ([child.description containsString:button]) {
+                    [node removeYogaChild:child];
+                    BOOL isNonScrollable = NO;
+                    while (dpView != nil && dpView.superview != nil) {
+                        if ([dpView.superview.accessibilityIdentifier isEqualToString:@"id.video.non_scrollable_action_bar"]) {
+                            isNonScrollable = YES;
+                            break;
+                        } else if ([dpView.superview.accessibilityIdentifier isEqualToString:@"id.video.scrollable_action_bar"]) {
+                            break;
+                        } 
+                        dpView = (_ASDisplayView *)dpView.superview;
+                    }
+                    ASDisplayNode *superNode;
+                    if (isNonScrollable) {
+                        superNode = dpView.keepalive_node;
+                    } else if (isSpecialButton) {
+                        if (boolCount == 1) continue;
+                        for (int i=0; i<3; i++) dpView = dpView.subviews.firstObject;
+                        superNode = dpView.keepalive_node;
+                    } else {
+                        superNode = [dpView performSelector:@selector(node)];
+                    }
+                    for (ASDisplayNode *child in superNode.yogaChildren) [superNode removeYogaChild:child];
+                    [dpView removeFromSuperview];
+                    break;
+                } else if (boolCount == 1) {
+                    if ([child containsString:@"id.video."]) continue;
+                    NSString *desc = nil;
+                    @try {
+                        desc = [[[[[[node nodeController] performSelector:@selector(parent)] performSelector:@selector(parent)] performSelector:@selector(owningComponent)] performSelector:@selector(owningComponent)] description];
+                    } @catch (id ex) {
+                        continue;
+                    }
+                    if (desc != nil && [desc containsString:@"segmented_like_dislike_button_inner.eml"]) {
                         [node removeYogaChild:child];
-                        [view removeFromSuperview];
-                    } else if (![desc containsString:@"id.video.like.button"] && ![desc containsString:@"id.video.dislike.button"]) {
-                        [node removeYogaChild:child];
+                        break;
                     }
                 }
             }
         }
     }
 }
+*/
 
 %hook YTMenuController
 - (NSMutableArray <YTActionSheetAction *> *)actionsForRenderers:(NSMutableArray <YTIMenuItemSupportedRenderers *> *)renderers fromView:(UIView *)fromView entry:(id)entry shouldLogItems:(BOOL)shouldLogItems firstResponder:(id)firstResponder {
@@ -1949,7 +1921,7 @@ void YouModFilterVideoButtons(_ASDisplayView *view, NSString *iden) {
     if (IS_ENABLED(OldQualityPicker)) {
         %init(OldVideoQuality);
     }
-    if (IS_ENABLED(ExtraSpeed) || IS_ENABLED(GestureControls) || INTFORVAL(HoldToSpeedIndex) >= 9 || INTFORVAL(AutoSpeedIndex) >= 9) {
+    if (IS_ENABLED(ExtraSpeed) || IS_ENABLED(GestureControls) || INTFORVAL(HoldToSpeedIndex) >= 9 || INTFORVAL(AutoSpeedIndex) >= 9 || INTFORVAL(ShortsAutoSpeedIndex) >= 9) {
         %init(Speed);
     }
     if (IS_ENABLED(ForceMiniPlayer)) {

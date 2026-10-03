@@ -22,8 +22,8 @@
 "SOURCE_CODES_DESC" = "코드를 확인해보세요!";
 
 "EXTRA" = "기타";
-"FIX_PLAYBACK_ISSUES" = "재생 문제 해결 (임시)";
-"FIX_PLAYBACK_ISSUES_DESC" = "일부 사용자들이 겪는 동영상 재생 문제를 해결하려고 시도합니다. 이 옵션을 켜면 오류가 발생하거나 재생에 실패할 때마다 플레이어가 자동으로 다시 로드됩니다.";
+"FIX_PLAYBACK_ISSUES" = "Fix playback issues (Experimental)";
+"FIX_PLAYBACK_ISSUES_DESC" = "This option is still experimental and may not work for some users.";
 
 "PERFER_HEADER" = "YouMod 환경설정";
 "PERFER" = "환경설정";
@@ -159,6 +159,8 @@
 "HIDE_CAST_BUTTON_NAVBAR_DESC" = "내비게이션 바의 캐스트 버튼을 숨깁니다.";
 "HIDE_MESSAGES_BUTTON" = "메시지 버튼 숨기기";
 "HIDE_MESSAGES_BUTTON_DESC" = "내비게이션 바의 메시지 버튼을 숨깁니다.";
+"HIDE_MORE_BUTTON_NAV" = "Hide more button";
+"HIDE_MORE_BUTTON_NAV_DESC" = "Hide the more (three-dot) button in the navigation bar.";
 
 "FEED" = "피드";
 "HIDE_SUBBAR" = "서브바 숨기기";
@@ -202,6 +204,8 @@
 "AUDIO_TRACK_SELECT_DESC" = "사용 가능한 경우 재생에 사용할 선호 오디오 트랙 언어를 지정합니다.";
 "NO_AUTO_DUBBED" = "원본 오디오 트랙 사용";
 "NO_AUTO_DUBBED_DESC" = "선호 언어 트랙이 자동 더빙되었거나 찾을 수 없는 경우 원본 오디오 트랙을 사용합니다.";
+"NO_AUTO_TRANSLATED_TITLES" = "Original video titles";
+"NO_AUTO_TRANSLATED_TITLES_DESC" = "Shows video titles in their original language instead of YouTube's automatic translation, where the original title is provided.";
 "CAPTION_TRACK" = "선호하는 자막";
 "CAPTION_TRACK_SELECT" = "선택된 자막";
 "CAPTION_TRACK_SELECT_DESC" = "사용 가능한 경우 표시할 선호 자막 언어를 지정합니다.";
@@ -225,6 +229,8 @@
 "OVERLAY_BUTTONS_EMPTY" = "버튼 없음";
 "REMOVE_ADS" = "광고 삭제";
 "REMOVE_ADS_DESC" = "게임을 제외한 앱 내 광고를 삭제합니다.";
+"HIDE_SPONSOR_BUTTON" = "Hide sponsor button";
+"HIDE_SPONSOR_BUTTON_DESC" = "Hide the sponsor button under the video and in the Shorts overlay.";
 "HOLD_TO_SPEED" = "길게 눌러 배속 재생";
 "HOLD_TO_SPEED_DESC" = "길게 누르면 지정한 배속으로 재생됩니다.";
 "HIDE_AUTOPLAY" = "자동재생 스위치 숨기기";
@@ -380,12 +386,20 @@
 "REMOVE_SHORTS_LIKE_BUTTON_DESC" = "Shorts 오버레이에서 좋아요 버튼을 제거합니다.";
 "REMOVE_SHORTS_COMMENT_BUTTON" = "댓글 버튼 제거";
 "REMOVE_SHORTS_COMMENT_BUTTON_DESC" = "Shorts 오버레이에서 댓글 버튼을 제거합니다.";
+"REMOVE_SHORTS_COMMENT_BAR" = "Remove comment box";
+"REMOVE_SHORTS_COMMENT_BAR_DESC" = "Removes the comment box from the Shorts overlay.";
+"REMOVE_SHORTS_RELATED_BUTTONS" = "Remove related Shorts metadata buttons";
+"REMOVE_SHORTS_RELATED_BUTTONS_DESC" = "Hide the buttons under the video title in the Shorts overlay.";
+"REMOVE_SHORTS_SAVE_BUTTON" = "저장 버튼 제거";
+"REMOVE_SHORTS_SAVE_BUTTON_DESC" = "Shorts 오버레이에서 저장 버튼을 제거합니다.";
 "REMOVE_SHORTS_SHARE_BUTTON" = "공유 버튼 제거";
 "REMOVE_SHORTS_SHARE_BUTTON_DESC" = "Shorts 오버레이에서 공유 버튼을 제거합니다.";
 "REMOVE_SHORTS_REMIX_BUTTON" = "리믹스 버튼 제거";
 "REMOVE_SHORTS_REMIX_BUTTON_DESC" = "Shorts 오버레이에서 리믹스 버튼을 제거합니다.";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON" = "사운드 메타데이터 버튼 제거";
 "REMOVE_SHORTS_SOUNDMETADATA_BUTTON_DESC" = "Shorts 오버레이에서 사운드 메타데이터 버튼을 제거합니다.";
+"REMOVE_SHORTS_SUB_BUTTON" = "Remove subscribe button";
+"REMOVE_SHORTS_SUB_BUTTON_DESC" = "Removes the subscribe button from the Shorts overlay.";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON" = "구독 버튼 제거";
 "REMOVE_SHORTS_PAUSED_SUB_BUTTON_DESC" = "Shorts 일시정지 헤더에서 구독 버튼을 제거합니다.";
 "REMOVE_SHORTS_PAUSED_LIVE_BUTTON" = "라이브 버튼 제거";
@@ -398,6 +412,8 @@
 "ENABLES_SHORTS_QUALITY_DESC" = "Shorts에서 동영상 화질 선택 메뉴를 강제로 사용하도록 합니다.";
 "SHOW_SHORTS_SEEKBAR" = "탐색바 항상 표시";
 "SHOW_SHORTS_SEEKBAR_DESC" = "Shorts 플레이어 하단에 진행/탐색 바가 항상 표시되도록 합니다.";
+"DEFAULT_SPEED_SHORTS" = "Shorts default playback rate";
+"DEFAULT_SPEED_SHORTS_DESC" = "Overrides the default playback speed for Shorts, separate from regular videos.";
 "REMOVE_POSTS_SHORTS" = "게시물 제거";
 "REMOVE_POSTS_SHORTS_DESC" = "피드에서 게시물을 제거합니다.";
 "SHORTS_FULLSCREEN" = "제스처로 전체화면";
@@ -512,6 +528,8 @@
 "HIDE_COMMUNITY_BUTTON_PANEL_DESC" = "참여 패널의 커뮤니티 버튼을 숨깁니다.";
 "HIDE_INFO_BUTTON_PANEL" = "정보 버튼 숨기기";
 "HIDE_INFO_BUTTON_PANEL_DESC" = "참여 패널의 정보 버튼을 숨깁니다.";
+"HIDE_SORT_FILTER_PANEL" = "Hide sort & filter button";
+"HIDE_SORT_FILTER_PANEL_DESC" = "Hide the sort and filter button from the top of the panel (except in live).";
 "DISABLES_RTL" = "RTL 서식 비활성화";
 "DISABLES_RTL_DESC" = "오른쪽에서 왼쪽(RTL)으로 표시되는 언어의 텍스트를 강제로 왼쪽에서 오른쪽(LTR) 형식으로 표시합니다.";
 "DEVICE_UI" = "인터페이스 스타일";
@@ -538,6 +556,8 @@
 "SB_SEGMENTS_IN_MINIPLAYER_DESC" = "미니플레이어의 진행 바에 색상으로 구간을 표시합니다.";
 "SB_SHOW_DURATION" = "구간 제외 재생 시간 표시";
 "SB_SHOW_DURATION_DESC" = "건너뛸 수 있는 구간을 제외한 전체 동영상 재생 시간을 표시합니다.";
+"SB_SHOW_FULL_VIDEO_LABEL" = "전체 동영상 라벨 표시";
+"SB_SHOW_FULL_VIDEO_LABEL_DESC" = "동영상 전체를 대상으로 하는 카테고리(예: Exclusive Access)로 라벨이 지정되면 배너를 표시합니다.";
 "SB_CATEGORIES_HEADER" = "구간 카테고리";
 "SB_SEGMENT_COLOR" = "구간 색상";
 
@@ -549,25 +569,15 @@
 "SB_ACTION_SKIP_TO" = "구간으로 건너뛰기";
 
 "SB_CAT_sponsor" = "스폰서";
-"SB_CAT_sponsor_DESC" = "크리에이터와 직접적인 관련이 없는 제품 또는 서비스에 대한 유료 프로모션입니다.";
 "SB_CAT_intro" = "인트로/오프닝";
-"SB_CAT_intro_DESC" = "일반적으로 동영상 시작 부분에 표시되는 인트로 애니메이션 또는 막간입니다.";
 "SB_CAT_outro" = "엔딩 카드/크레딧";
-"SB_CAT_outro_DESC" = "동영상 끝부분의 엔딩 카드, 크레딧 또는 아웃트로입니다.";
 "SB_CAT_interaction" = "상호작용 알림";
-"SB_CAT_interaction_DESC" = "좋아요, 구독 또는 소셜 미디어 팔로우를 요청하는 구간입니다.";
 "SB_CAT_selfpromo" = "자체 프로모션";
-"SB_CAT_selfpromo_DESC" = "크리에이터 본인의 제품, 굿즈 또는 기타 콘텐츠에 대한 무료 홍보입니다.";
 "SB_CAT_music_offtopic" = "비음악 구간";
-"SB_CAT_music_offtopic_DESC" = "뮤직비디오 내의 비음악 구간(예: 대화, 인트로 등)입니다.";
 "SB_CAT_preview" = "미리보기/요약";
-"SB_CAT_preview_DESC" = "이전 에피소드 요약 또는 다른 동영상의 미리보기 콘텐츠입니다.";
 "SB_CAT_hook" = "하이라이트 미리보기/인사";
-"SB_CAT_hook_DESC" = "동영상에 나올 내용의 간단한 티저 또는 오프닝 인사말입니다.";
 "SB_CAT_poi_highlight" = "주요 하이라이트";
-"SB_CAT_poi_highlight_DESC" = "동영상의 핵심 포인트나 하이라이트입니다. '건너뛰기'를 사용하여 바로 이동하세요.";
 "SB_CAT_filler" = "군더더기/잡담";
-"SB_CAT_filler_DESC" = "동영상 주제와 직접 관련 없는 잡담, 개그 또는 부가적인 장면입니다.";
 
 "SB_SKIPPED" = "%@ 구간을 건너뛰었습니다";
 "SB_DETECTED" = "%@ 구간이 감지되었습니다.\n이 구간을 건너뛰시겠습니까?";
@@ -597,6 +607,25 @@
 "SB_VOTE_SUCCESS" = "투표가 제출되었습니다";
 "SB_VOTE_FAILED" = "투표에 실패했습니다";
 "SB_VOTE_NO_SEGMENTS" = "이 동영상에는 구간이 없습니다";
+"SB_CAT_exclusive_access" = "Exclusive Access";
+"SB_FULL_VIDEO_LABEL" = "This video is labeled: %@";
+"SB_DETECTED_MUTE" = "%@ segment detected.\nWould you like to mute the segment?";
+"SB_MUTE_NOW" = "Mute";
+"SB_MENU_SUBMIT" = "Submit segment";
+"SB_SUBMIT_TITLE" = "New segment";
+"SB_SUBMIT_MESSAGE" = "Play the video to the moment you want to mark, then tap Set start / Set end. Only submit accurate segments.";
+"SB_SUBMIT_CATEGORY" = "Category";
+"SB_SUBMIT_SET_START" = "Set start to current time";
+"SB_SUBMIT_SET_END" = "Set end to current time";
+"SB_SUBMIT_SET_HIGHLIGHT" = "Set highlight to current time";
+"SB_SUBMIT_NOT_SET" = "Not set";
+"SB_SUBMIT_PREVIEW" = "Preview from start";
+"SB_SUBMIT_SEND" = "Submit";
+"SB_SUBMIT_SUCCESS" = "Segment submitted";
+"SB_SUBMIT_FAILED" = "Submission failed";
+"SB_SUBMIT_DUPLICATE" = "This segment was already submitted";
+"SB_SUBMIT_RATE_LIMIT" = "Too many submissions, try again later";
+"SB_SUBMIT_INVALID" = "Set a valid start and end first";
 "SB_WHITELIST_ADD" = "화이트리스트에 추가";
 "SB_WHITELIST_REMOVE" = "화이트리스트에서 제거";
 "SB_WHITELIST_DESC" = "이 채널에서는 SponsorBlock이 비활성화됩니다.";
@@ -620,12 +649,18 @@
 "DOWNLOAD_LIBRARY_TAB" = "다운로드";
 "DOWNLOAD_LIBRARY_TAB_DESC" = "다운로드한 모든 동영상을 썸네일과 용량과 함께 보여주는 탭을 추가합니다.";
 "DOWNLOAD_LIBRARY_EMPTY" = "아직 다운로드한 항목이 없습니다";
+
 "LIBRARY_OPEN_VIDEO" = "YouTube에서 동영상 열기";
 "LIBRARY_NO_VIDEO_ID" = "이 동영상의 ID를 찾을 수 없습니다";
 "LIBRARY_SHARE" = "공유";
 "LIBRARY_SAVE_THUMBNAIL" = "썸네일을 사진 앱에 저장";
 "LIBRARY_VIEW_INFO" = "정보 보기";
 "LIBRARY_DELETE" = "삭제";
+"LIBRARY_RENAME" = "이름 바꾸기";
+"LIBRARY_RENAME_TITLE" = "파일 이름 바꾸기";
+"LIBRARY_RENAMED" = "파일 이름이 변경되었습니다";
+"LIBRARY_RENAME_EMPTY" = "이름을 비워 둘 수 없습니다";
+"LIBRARY_RENAME_FAILED" = "파일 이름을 바꿀 수 없습니다";
 "OK" = "확인";
 "LIBRARY_INFO_SIZE" = "크기";
 "LIBRARY_INFO_DURATION" = "재생 시간";
@@ -661,16 +696,16 @@
 "FILES_HINT_VIDEO" = "%@ 동영상은 더 효율적이고 품질이 높지만 iOS 기본 플레이어에서는 재생할 수 없습니다. VLC 같은 플레이어를 사용하세요.";
 "FILES_HINT_AUDIO" = "%@ 오디오는 더 효율적이지만 iOS 기본 플레이어에서는 재생할 수 없습니다. VLC 같은 플레이어를 사용하세요.";
 "FILES_HINT_COMPATIBLE" = "H.264 동영상과 AAC 오디오 — iOS 기본 플레이어에서 재생됩니다.";
+"FILES_HINT_AUDIO_COMPATIBLE" = "AAC 오디오 — iOS 기본 플레이어에서 재생됩니다.";
 "AUDIO_ORIGINAL" = "원본";
-"AUDIO_ORIGINAL_LANG" = "%@ [원본]";
 "AUDIO_AUTO_DUBBED" = "%@ [AI]";
-"AUDIO_DUBBED" = "%@";
 "SLEEP_TIMER" = "수면 타이머";
 "SLEEP_TIMER_OFF" = "타이머 끄기";
 "SLEEP_TIMER_REMAINING_FMT" = "남은 시간: %@";
 "SLEEP_TIMER_MINUTES_FMT" = "%ld분";
 "SLEEP_TIMER_END_OF_VIDEO" = "동영상 끝";
 "SLEEP_TIMER_TIME_UP" = "수면 타이머 종료 — 재생이 일시정지되었습니다";
+"SLEEP_TIMER_VIDEO_CHANGED" = "동영상이 변경되어 수면 타이머를 껐습니다";
 "SLEEP_TIMER_CUSTOM_TIME" = "시간 선택...";
 "SLEEP_TIMER_ENTRY" = "Sleep Timer";
 "SLEEP_TIMER_ENTRY_DESC" = "Where the Sleep Timer entry point appears.";

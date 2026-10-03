@@ -171,6 +171,12 @@ static NSString *YMByteCountString(unsigned long long bytes) {
     titleLabel.numberOfLines = 2;
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
+    UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [closeButton setImage:YouModSymbolImageInCanvas(@"xmark", 24, 17, UIImageSymbolWeightSemibold) forState:UIControlStateNormal];
+    closeButton.tintColor = UIColor.labelColor;
+    closeButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [closeButton addTarget:self action:@selector(closeTapped) forControlEvents:UIControlEventTouchUpInside];
+
     UILabel *hint = [UILabel new];
     self.codecHint = hint;
     hint.font = [UIFont systemFontOfSize:12];
@@ -195,15 +201,20 @@ static NSString *YMByteCountString(unsigned long long bytes) {
     [download addTarget:self action:@selector(startDownload) forControlEvents:UIControlEventTouchUpInside];
 
     [self.view addSubview:titleLabel];
+    [self.view addSubview:closeButton];
     [self.view addSubview:hint];
     [self.view addSubview:table];
     [self.view addSubview:download];
 
     UILayoutGuide *safe = self.view.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
+        [closeButton.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-10],
+        [closeButton.centerYAnchor constraintEqualToAnchor:titleLabel.centerYAnchor],
+        [closeButton.widthAnchor constraintEqualToConstant:34],
+        [closeButton.heightAnchor constraintEqualToConstant:34],
         [titleLabel.topAnchor constraintEqualToAnchor:safe.topAnchor constant:18],
         [titleLabel.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:20],
-        [titleLabel.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-20],
+        [titleLabel.trailingAnchor constraintEqualToAnchor:closeButton.leadingAnchor constant:-6],
         [hint.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:14],
         [hint.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:20],
         [hint.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-20],
@@ -231,13 +242,49 @@ static NSString *YMByteCountString(unsigned long long bytes) {
     return out;
 }
 
+// Applies the model rebuilt by rebuildRows on top of the previous section list:
+// fades sections in/out when they appear or disappear, and cross-fades the
+// row content of the sections whose rows actually changed.
+- (void)applyRebuiltRowsFrom:(NSArray<NSNumber *> *)oldSections
+                changedKinds:(NSArray<NSNumber *> *)changedKinds {
+    // Batch updates must only declare section insert/delete — and may only run
+    // when the section list itself changed. Switching codecs keeps the sections
+    // but changes row counts, and an (empty) batch would trip UIKit's data
+    // source consistency check ("Invalid batch updates detected").
+    if (![oldSections isEqualToArray:self.sections]) {
+        [self.tableView performBatchUpdates:^{
+            for (NSUInteger i = 0; i < oldSections.count; i++) {
+                if ([self.sections indexOfObject:oldSections[i]] == NSNotFound) {
+                    [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:i]
+                                  withRowAnimation:UITableViewRowAnimationFade];
+                }
+            }
+            for (NSUInteger i = 0; i < self.sections.count; i++) {
+                if ([oldSections indexOfObject:self.sections[i]] == NSNotFound) {
+                    [self.tableView insertSections:[NSIndexSet indexSetWithIndex:i]
+                                  withRowAnimation:UITableViewRowAnimationFade];
+                }
+            }
+        } completion:nil];
+    }
+    NSMutableIndexSet *reload = [NSMutableIndexSet indexSet];
+    for (NSNumber *kind in changedKinds) {
+        NSInteger index = [self.sections indexOfObject:kind];
+        if (index != NSNotFound) [reload addIndex:index];
+    }
+    if (reload.count > 0) {
+        [self.tableView reloadSections:reload withRowAnimation:UITableViewRowAnimationAutomatic];
+    }
+    [self refreshChrome];
+}
+
 - (void)videoCodecChanged {
     NSInteger index = self.videoCodecControl.selectedSegmentIndex;
     if (index >= 0 && index < (NSInteger)self.tabs.count) {
         self.selectedTab = self.tabs[index];
+        NSArray<NSNumber *> *oldSections = self.sections;
         [self rebuildRows];
-        [self.tableView reloadData];
-        [self refreshChrome];
+        [self applyRebuiltRowsFrom:oldSections changedKinds:@[@(YMDownloadSheetSectionVideo)]];
     }
 }
 
@@ -245,9 +292,9 @@ static NSString *YMByteCountString(unsigned long long bytes) {
         NSInteger index = self.audioCodecControl.selectedSegmentIndex;
         if (index >= 0 && index < (NSInteger)self.audioCodecs.count) {
             self.selectedAudioCodec = self.audioCodecs[index];
+            NSArray<NSNumber *> *oldSections = self.sections;
             [self rebuildRows];
-            [self.tableView reloadData];
-            [self refreshChrome];
+            [self applyRebuiltRowsFrom:oldSections changedKinds:@[@(YMDownloadSheetSectionAudio)]];
         }
 }
 
@@ -266,7 +313,7 @@ static NSString *YMByteCountString(unsigned long long bytes) {
         if (audioCodec.length > 0 && !YMCodecIsApplePlayable(audioCodec, NO)) {
             return [NSString stringWithFormat:LOC(@"FILES_HINT_AUDIO"), YMCodecDisplayName(audioCodec)];
         }
-        return LOC(@"FILES_HINT_COMPATIBLE");
+        return LOC(@"FILES_HINT_AUDIO_COMPATIBLE");
     }
     if (audioCodec.length == 0) {
         if (!videoOK) {
@@ -324,7 +371,7 @@ static NSString *YMByteCountString(unsigned long long bytes) {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     static NSString *keys[] = {@"VIDEO_CODEC", @"AUDIO_CODEC", @"QUALITY", @"SOUNDTRACK", @"SUBTITLES"};
     NSInteger kind = [self kindForSection:section];
-    if (kind < 0 || kind > 3) return nil;
+    if (kind < 0 || kind > 4) return nil;
     return LOC(keys[kind]);
 }
 
@@ -447,6 +494,10 @@ static NSString *YMByteCountString(unsigned long long bytes) {
     }
     [tableView reloadData];
     [self refreshChrome];
+}
+
+- (void)closeTapped {
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)startDownload {
